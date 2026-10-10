@@ -1,0 +1,109 @@
+{
+  "status": "ok",
+  "question": "What share of adults have a bachelor's degree or higher?",
+  "answer": "52.4% of the weighted adult population in this contract fixture has a bachelor\u2019s degree or higher.",
+  "query_spec": {
+    "schema_version": "1.0",
+    "mode": "verified_data",
+    "intent": "share",
+    "universe": "adults_18_plus",
+    "group_by": "education",
+    "numerator": {
+      "operator": "or",
+      "clauses": [
+        {
+          "dimension": "education",
+          "key": "bachelors"
+        },
+        {
+          "dimension": "education",
+          "key": "graduate"
+        }
+      ]
+    },
+    "weight_field": "PWGTP"
+  },
+  "geography": {
+    "city_slug": "sf",
+    "label": "San Francisco (test fixture)",
+    "state_fips": "06",
+    "puma_codes": [
+      "07507",
+      "07508"
+    ],
+    "coverage_type": "puma_based_approximation",
+    "exact_city_boundary": false,
+    "limitations": [
+      "Fixture coverage uses PUMAs; it is not an exact city boundary."
+    ]
+  },
+  "chart": {
+    "type": "bar",
+    "title": "Educational attainment among adults",
+    "unit": "percent",
+    "series": [
+      {
+        "key": "bachelors_or_higher",
+        "label": "Bachelor\u2019s degree or higher",
+        "value": 52.4,
+        "weighted_population": 123456,
+        "raw_records": 1234,
+        "map_filter": {
+          "operator": "or",
+          "clauses": [
+            {
+              "dimension": "education",
+              "key": "bachelors"
+            },
+            {
+              "dimension": "education",
+              "key": "graduate"
+            }
+          ]
+        }
+      },
+      {
+        "key": "graduate",
+        "label": "Graduate degree",
+        "value": 21.2,
+        "weighted_population": 49948,
+        "raw_records": 490,
+        "map_filter": {
+          "operator": "and",
+          "clauses": [
+            {
+              "dimension": "education",
+              "key": "graduate"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "source": {
+    "verification_status": "verified",
+    "provider": "U.S. Census Bureau",
+    "dataset": "ACS PUMS schema test fixture (not real statistics)",
+    "vintage": "2023",
+    "url": "https://www.census.gov/programs-surveys/acs/microdata.html",
+    "retrieved_at": "2026-09-12T12:00:00Z",
+    "local_snapshot": "data/sf_pums.csv",
+    "weight_field": "PWGTP",
+    "raw_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "snapshot_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "license": null
+  },
+  "method": {
+    "estimator": "sum_of_person_weights",
+    "scope": "complete_committed_pums_snapshot",
+    "weight_field": "PWGTP",
+    "numerator_weighted": 123456,
+    "denominator_weighted": 235603,
+    "formula": "100 * numerator_weighted / denominator_weighted",
+    "rounding_digits": 1,
+    "synthetic_residents_used": false
+  },
+  "limitations": [
+    "Deterministic frontend contract fixture. These invented test values and hashes are not Census statistics or verification evidence."
+  ]
+}

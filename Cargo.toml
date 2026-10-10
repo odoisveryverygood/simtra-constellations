@@ -1,0 +1,19 @@
+# sim francisco monorepo workspace.
+#   crates/sim-core  — digital-twin backend (prediction engine + life-sim) + bins
+#   crates/sim-maps  — OSM/DEM -> pixel-tile map pipeline (was golden-future-map)
+# Shared data/ + assets/ + config/ live at this root; bins read them CWD-relative.
+[workspace]
+resolver = "2"
+members = ["crates/sim-core", "crates/sim-maps"]
+
+# Profiles only take effect at the workspace root. sim-core's original release
+# profile is the base; the map pipeline keeps its heavier optimization via a
+# per-package override (lto is not overridable per-package, so it is dropped —
+# this changes build speed only, not the deterministic tile output).
+[profile.release]
+opt-level = 2
+codegen-units = 16
+
+[profile.release.package.sim-maps]
+opt-level = 3
+codegen-units = 1

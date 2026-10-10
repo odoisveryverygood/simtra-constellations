@@ -1,0 +1,13 @@
+{
+  "answer": null,
+  "query_spec": null,
+  "geography": null,
+  "chart": null,
+  "source": null,
+  "method": null,
+  "status": "unsupported",
+  "question": "Will people support this policy?",
+  "limitations": [
+    "This question cannot be verified using the available datasets."
+  ]
+}

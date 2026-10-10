@@ -1,0 +1,289 @@
+{
+  "formatting": {
+    "exit": 1,
+    "unchanged_base_files": 44,
+    "files": [
+      "crates/sim-core/src/agent.rs",
+      "crates/sim-core/src/bin/daemon.rs",
+      "crates/sim-core/src/bin/ingest_pums.rs",
+      "crates/sim-core/src/bin/server.rs",
+      "crates/sim-core/src/bin/validate.rs",
+      "crates/sim-core/src/geo.rs",
+      "crates/sim-core/src/lifestyle.rs",
+      "crates/sim-core/src/model.rs",
+      "crates/sim-core/src/news.rs",
+      "crates/sim-core/src/pathfind.rs",
+      "crates/sim-core/src/persona.rs",
+      "crates/sim-core/src/pums.rs",
+      "crates/sim-core/src/religion.rs",
+      "crates/sim-core/src/rubric.rs",
+      "crates/sim-core/src/sim.rs",
+      "crates/sim-core/src/state.rs",
+      "crates/sim-core/src/store.rs",
+      "crates/sim-maps/src/autotile.rs",
+      "crates/sim-maps/src/bin/build_atlas.rs",
+      "crates/sim-maps/src/bin/build_facade_atlas.rs",
+      "crates/sim-maps/src/bin/demo_pngs.rs",
+      "crates/sim-maps/src/bin/export_map.rs",
+      "crates/sim-maps/src/bin/verify.rs",
+      "crates/sim-maps/src/config.rs",
+      "crates/sim-maps/src/crs.rs",
+      "crates/sim-maps/src/db.rs",
+      "crates/sim-maps/src/debug.rs",
+      "crates/sim-maps/src/dem.rs",
+      "crates/sim-maps/src/lod.rs",
+      "crates/sim-maps/src/main.rs",
+      "crates/sim-maps/src/osm.rs",
+      "crates/sim-maps/src/pipeline.rs",
+      "crates/sim-maps/src/raster.rs",
+      "crates/sim-maps/src/render.rs",
+      "crates/sim-maps/src/topo.rs",
+      "crates/sim-maps/src/types.rs",
+      "crates/sim-maps/tests/phase1.rs",
+      "crates/sim-maps/tests/phase2.rs",
+      "crates/sim-maps/tests/phase3.rs",
+      "crates/sim-maps/tests/phase4.rs",
+      "crates/sim-maps/tests/phase5.rs",
+      "crates/sim-maps/tests/phase6.rs",
+      "crates/sim-maps/tests/phase7.rs",
+      "crates/sim-maps/tests/phase8.rs"
+    ]
+  },
+  "cargo-backend": {
+    "passed": 67,
+    "failed": 0,
+    "exit": 0,
+    "stdout": "   Compiling simfrancisco v0.1.0 (/Users/aradhyamishra/Documents/ChatGPT/hackathon/simtra-evidence-chart/crates/sim-core)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.70s\n     Running unittests src/lib.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/simfrancisco-a0c9414ec8376e18)\n\nrunning 66 tests\ntest aggregate::tests::soft_indicators_average ... ok\ntest aggregate::tests::design_effect_unequal_greater_than_one ... ok\ntest aggregate::tests::equal_weights_is_plain_mean ... ok\ntest aggregate::tests::tv_distance_basic ... ok\ntest aggregate::tests::design_effect_equal_weights_is_one ... ok\ntest aggregate::tests::distribution_sums_to_one ... ok\ntest aggregate::tests::weights_change_the_estimate ... ok\ntest aggregate::tests::option_breakdown_zero_weight_uses_uniform_fallback ... ok\ntest aggregate::tests::breakdown_groups_correctly ... ok\ntest aggregate::tests::option_breakdown_is_weighted_normalized_and_stable ... ok\ntest api::tests::counterfactual_rejects_invalid_selectors_and_oversized_fields ... ok\ntest geo::tests::utm_corner_matches_bbox ... ok\ntest geo::tests::utm_roundtrip_sf ... ok\ntest api::tests::ab_request_validation_rejects_bad_inputs ... ok\ntest api::tests::counterfactual_rejects_options_and_oversized_copy ... ok\ntest api::tests::counterfactual_wraps_marketing_copy_as_quoted_data ... ok\ntest evidence::tests::unknown_metadata_is_explicit_even_for_a_dated_custom_path ... ok\ntest insforge::tests::builds_a_small_persistence_record_without_secrets ... ok\ntest model::tests::extract_json_strips_fences ... ok\ntest evidence::tests::hydra_states_never_change_the_claim_class ... ok\ntest parse::tests::supported_router_response_requires_a_question ... ok\ntest evidence::tests::response_preserves_all_legacy_values_when_hydra_is_unavailable ... ok\ntest parse::tests::supported_router_response_trims_the_question ... ok\ntest pathfind::tests::octile_distance ... ok\ntest predict::tests::ab_prompt_keeps_stimuli_json_escaped_and_data_only ... ok\ntest predict::tests::canonical_segments_have_stable_values_and_use_population_cutoffs ... ok\ntest model::tests::extract_gemini_interaction ... ok\ntest model::tests::extract_responses_message_skips_reasoning ... ok\ntest model::tests::extract_chat_completions ... ok\ntest model::tests::model_parse_and_shape ... ok\ntest predict::tests::cross_axes_splits_only_intersectional_dimensions ... ok\ntest predict::tests::cross_tab_sorts_by_left_axis_then_right_axis ... ok\ntest predict::tests::new_single_dimensions_use_canonical_order ... ok\ntest predict::tests::option_groups_follow_semantic_order ... ok\ntest predict::tests::unknown_keys_sort_deterministically_after_known_ones ... ok\ntest pums::tests::derived_categories ... ok\ntest pums::tests::income_adjustment_applied ... ok\ntest pums::tests::parse_line_strips_quotes ... ok\ntest religion::tests::deterministic_given_seed ... ok\ntest rocketride::tests::normalizes_direct_router_response ... ok\ntest rocketride::tests::normalizes_json_string_inside_answers_lane ... ok\ntest rocketride::tests::normalizes_response_lane_array ... ok\ntest predict::tests::turnout_increases_with_age_and_education ... ok\ntest rocketride::tests::rejects_supported_response_without_a_question ... ok\ntest rocketride::tests::posts_router_payload_and_reads_webhook_response ... ok\ntest rocketride::tests::rejects_unrelated_response ... ok\ntest rubric::tests::brier_and_market_scoring ... ok\ntest rubric::tests::counterfactual_direction ... ok\ntest rubric::tests::election_scoring_curve ... ok\ntest rubric::tests::weighting_headline_respects_weights_and_zeros ... ok\ntest sim::tests::value_distance_symmetric ... ok\ntest state::tests::hash_changes_on_mutation ... ok\ntest state::tests::hash_is_order_independent_after_canonicalize ... ok\ntest state::tests::json_roundtrip_bitforbit ... ok\ntest sim::tests::broadcast_reactions_split_by_values ... ok\ntest store::tests::commit_restore_roundtrip_bitforbit ... ok\ntest store::tests::branch_does_not_mutate_main ... ok\ntest store::tests::reset_to_main_restores_exact_hash ... ok\ntest persona::tests::deterministic_population ... ok\ntest persona::tests::sf_is_progressive_on_average ... ok\ntest persona::tests::income_quintiles_monotonic ... ok\ntest religion::tests::unaffiliated_is_plurality_overall ... ok\ntest persona::tests::marginals_match_population ... ok\ntest predict::tests::clustering_bounds_count ... ok\ntest religion::tests::hispanic_skews_catholic_in_aggregate ... ok\ntest aggregate::tests::bootstrap_ci_brackets_point_estimate ... ok\n\ntest result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s\n\n     Running unittests src/bin/daemon.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/daemon-c14a1e3958512bc8)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/ingest_pums.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/ingest_pums-f64429a81c2246ee)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/server.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/server-d43136d5282b8051)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/validate.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/validate-63db2ec569ee2147)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/contract.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/contract-b92728a592336fb7)\n\nrunning 1 test\ntest contract_all_endpoints ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.87s\n\n   Doc-tests simfrancisco\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+  },
+  "cargo-workspace": {
+    "passed": 162,
+    "failed": 0,
+    "exit": 0,
+    "stdout": "   Compiling simfrancisco v0.1.0 (/Users/aradhyamishra/Documents/ChatGPT/hackathon/simtra-evidence-chart/crates/sim-core)\nwarning: unused variable: `features`\n  --> crates/sim-maps/tests/phase4.rs:27:9\n   |\n27 |     let features = FeatureIndex::empty();\n   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n   |\n   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default\n\nwarning: unused variable: `features`\n  --> crates/sim-maps/tests/phase4.rs:46:9\n   |\n46 |     let features = FeatureIndex::empty();\n   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n\nwarning: unused variable: `features`\n  --> crates/sim-maps/tests/phase4.rs:67:9\n   |\n67 |     let features = FeatureIndex::empty();\n   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n\nwarning: unused variable: `features`\n  --> crates/sim-maps/tests/phase4.rs:84:9\n   |\n84 |     let features = FeatureIndex::empty();\n   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n\nwarning: unused variable: `features`\n   --> crates/sim-maps/tests/phase4.rs:100:9\n    |\n100 |     let features = FeatureIndex::empty();\n    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n\nwarning: unused variable: `features`\n   --> crates/sim-maps/tests/phase4.rs:119:9\n    |\n119 |     let features = FeatureIndex::empty();\n    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_features`\n\nwarning: `sim-maps` (test \"phase4\") generated 6 warnings (run `cargo fix --test \"phase4\" -p sim-maps` to apply 6 suggestions)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.05s\n     Running unittests src/lib.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/sim_maps-f82fe9a0764f7165)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/build_atlas.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/build_atlas-39c2b2eeea97b6fd)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/build_facade_atlas.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/build_facade_atlas-53a54ba1bbab8259)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/demo_pngs.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/demo_pngs-07018a4d85aefc7d)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/export_map.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/export_map-ac2bcf1245677ba8)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/main.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/pipeline-dbfb2e0e7480e25d)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/verify.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/verify-023775e1b869e39e)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase1.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase1-ebc040be9e58a856)\n\nrunning 2 tests\ntest multi_lod_batch ... ok\ntest blob_round_trip ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s\n\n     Running tests/phase2.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase2-4dde62b9d58f252b)\n\nrunning 9 tests\ntest average_elevation_flat_region ... ok\ntest average_elevation_mixed_region ... ok\ntest cliff_edge_detected ... ok\ntest flat_terrain_has_zero_rise ... ok\ntest walkable_slope_below_threshold ... ok\ntest bilinear_interpolation_midpoint ... ok\ntest flat_dem_sample_center ... ok\ntest sample_grid_utm_on_synthetic ... ok\ntest out_of_bounds_returns_none ... ok\n\ntest result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase3.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase3-acd5d440b903e554)\n\nrunning 12 tests\ntest highway_pedestrian_is_sidewalk ... ok\ntest highway_primary_is_road ... ok\ntest highway_footway_is_path ... ok\ntest non_highway_returns_none ... ok\ntest detect_walls_on_isolated_square ... ok\ntest road_paints_cells_within_buffer ... ok\ntest water_overwrites_road ... ok\ntest building_overwrites_park ... ok\ntest building_interior_is_floor ... ok\ntest building_boundary_cells_are_wall ... ok\ntest area_outside_building_is_grass ... ok\ntest dump_png_creates_file ... ok\n\ntest result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n     Running tests/phase4.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase4-163ade56091078ae)\n\nrunning 10 tests\ntest elevation_bands_max_is_seven ... ok\ntest elevation_bands_min_is_zero ... ok\ntest steep_path_becomes_stairs ... ok\ntest steep_road_becomes_stairs ... ok\ntest gentle_slope_stays_grass ... ok\ntest water_is_immune_to_cliff ... ok\ntest compute_max_rise_detects_step ... ok\ntest steep_grass_becomes_cliff ... ok\ntest building_floor_is_immune_to_cliff ... ok\ntest building_footprint_is_flattened ... ok\n\ntest result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase5.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase5-c107ead7a2005acb)\n\nrunning 22 tests\ntest all_cardinals_is_variant_21 ... ok\ntest autotile_grid_checkerboard_all_isolated ... ok\ntest autotile_grid_uniform_5x5_all_variant_46 ... ok\ntest fully_surrounded_center_in_uniform_grid ... ok\ntest e_only_is_variant_2 ... ok\ntest fully_surrounded_is_variant_46 ... ok\ntest fully_surrounded_normalises_to_0xff ... ok\ntest isolated_is_variant_0 ... ok\ntest isolated_water_in_3x3_grass_grid ... ok\ntest exactly_47_distinct_variants_in_table ... ok\ntest n_only_is_variant_1 ... ok\ntest north_neighbour_only ... ok\ntest oob_treated_as_same_class ... ok\ntest render_tile_id_encodes_variant ... ok\ntest render_tile_id_preserves_class ... ok\ntest s_only_is_variant_5 ... ok\ntest suppress_all_corners_when_edges_absent ... ok\ntest suppress_keeps_valid_corner ... ok\ntest suppress_ne_without_east_edge ... ok\ntest suppress_ne_without_north_edge ... ok\ntest variant_count_constant_is_47 ... ok\ntest w_only_is_variant_13 ... ok\n\ntest result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase6.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase6-e98ae35b29dba1b7)\n\nrunning 18 tests\ntest from_u8_unknown_defaults_to_grass ... ok\ntest collision_uniform_walkable_stays_walkable ... ok\ntest collision_max_pool_picks_highest_cost ... ok\ntest from_u8_round_trips_all_classes ... ok\ntest lod1_then_lod2_matches_direct_factor4 ... ok\ntest factor_4_reduces_to_correct_size ... ok\ntest majority_class_wins ... ok\ntest non_divisible_border_block_uses_available_cells ... ok\ntest non_divisible_width_rounds_up ... ok\ntest single_cell_grid_factor_2_produces_1x1 ... ok\ntest tie_broken_by_higher_precedence ... ok\ntest uniform_grid_stays_same_class ... ok\ntest lod4_size_for_125_cells ... ok\ntest lod5_size_for_125_cells ... ok\ntest lod3_size_for_125_cells ... ok\ntest lod2_size_for_125_cells ... ok\ntest lod1_size_for_125_cells ... ok\ntest collision_size_matches_semantic_downsample ... ok\n\ntest result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase7.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase7-6c7b6f5586031257)\n\nrunning 17 tests\ntest at_or_above_threshold_no_modifier ... ok\ntest building_floor_blocked_ignores_slope ... ok\ntest grass_on_flat_has_base_cost ... ok\ntest blocked_cells_unchanged_by_slope ... ok\ntest flat_terrain_no_modifier ... ok\ntest gentle_slope_adds_one ... ok\ntest cost_never_reaches_blocked_from_modifier ... ok\ntest flat_elevation_zero_rise ... ok\ntest grass_on_steep_slope_adds_two ... ok\ntest grass_on_gentle_slope_adds_one ... ok\ntest modifier_scales_with_threshold ... ok\ntest road_cost_flat_zero ... ok\ntest road_on_steep_slope_gets_modifier ... ok\ntest slope_cost_applied_through_rise_grid ... ok\ntest steep_slope_adds_two ... ok\ntest step_edge_has_expected_rise ... ok\ntest zero_threshold_does_not_panic ... ok\n\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/phase8.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/phase8-07c1de4d726bac88)\n\nrunning 5 tests\ntest parallel_slope_collision_consistent ... ok\ntest rayon_and_sequential_max_rise_match ... ok\ntest parallel_chunk_count_matches_grid_size ... ok\ntest parallel_all_grass_chunks_are_uniform_grass ... ok\ntest parallel_matches_serial_for_empty_features ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n     Running unittests src/lib.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/simfrancisco-5542b77fa4c08a4e)\n\nrunning 66 tests\ntest aggregate::tests::equal_weights_is_plain_mean ... ok\ntest aggregate::tests::design_effect_equal_weights_is_one ... ok\ntest aggregate::tests::soft_indicators_average ... ok\ntest aggregate::tests::tv_distance_basic ... ok\ntest aggregate::tests::design_effect_unequal_greater_than_one ... ok\ntest aggregate::tests::distribution_sums_to_one ... ok\ntest aggregate::tests::breakdown_groups_correctly ... ok\ntest aggregate::tests::weights_change_the_estimate ... ok\ntest aggregate::tests::option_breakdown_zero_weight_uses_uniform_fallback ... ok\ntest aggregate::tests::option_breakdown_is_weighted_normalized_and_stable ... ok\ntest geo::tests::utm_corner_matches_bbox ... ok\ntest geo::tests::utm_roundtrip_sf ... ok\ntest api::tests::ab_request_validation_rejects_bad_inputs ... ok\ntest api::tests::counterfactual_rejects_invalid_selectors_and_oversized_fields ... ok\ntest api::tests::counterfactual_wraps_marketing_copy_as_quoted_data ... ok\ntest api::tests::counterfactual_rejects_options_and_oversized_copy ... ok\ntest insforge::tests::builds_a_small_persistence_record_without_secrets ... ok\ntest evidence::tests::unknown_metadata_is_explicit_even_for_a_dated_custom_path ... ok\ntest model::tests::extract_json_strips_fences ... ok\ntest parse::tests::supported_router_response_requires_a_question ... ok\ntest parse::tests::supported_router_response_trims_the_question ... ok\ntest evidence::tests::response_preserves_all_legacy_values_when_hydra_is_unavailable ... ok\ntest pathfind::tests::octile_distance ... ok\ntest evidence::tests::hydra_states_never_change_the_claim_class ... ok\ntest predict::tests::ab_prompt_keeps_stimuli_json_escaped_and_data_only ... ok\ntest model::tests::extract_gemini_interaction ... ok\ntest model::tests::extract_chat_completions ... ok\ntest model::tests::extract_responses_message_skips_reasoning ... ok\ntest model::tests::model_parse_and_shape ... ok\ntest predict::tests::canonical_segments_have_stable_values_and_use_population_cutoffs ... ok\ntest predict::tests::cross_axes_splits_only_intersectional_dimensions ... ok\ntest predict::tests::cross_tab_sorts_by_left_axis_then_right_axis ... ok\ntest predict::tests::new_single_dimensions_use_canonical_order ... ok\ntest predict::tests::option_groups_follow_semantic_order ... ok\ntest pums::tests::derived_categories ... ok\ntest predict::tests::unknown_keys_sort_deterministically_after_known_ones ... ok\ntest pums::tests::income_adjustment_applied ... ok\ntest pums::tests::parse_line_strips_quotes ... ok\ntest religion::tests::deterministic_given_seed ... ok\ntest predict::tests::turnout_increases_with_age_and_education ... ok\ntest rocketride::tests::normalizes_direct_router_response ... ok\ntest rocketride::tests::normalizes_json_string_inside_answers_lane ... ok\ntest rocketride::tests::normalizes_response_lane_array ... ok\ntest rocketride::tests::rejects_supported_response_without_a_question ... ok\ntest rocketride::tests::rejects_unrelated_response ... ok\ntest rocketride::tests::posts_router_payload_and_reads_webhook_response ... ok\ntest rubric::tests::brier_and_market_scoring ... ok\ntest rubric::tests::counterfactual_direction ... ok\ntest rubric::tests::election_scoring_curve ... ok\ntest rubric::tests::weighting_headline_respects_weights_and_zeros ... ok\ntest sim::tests::value_distance_symmetric ... ok\ntest state::tests::hash_changes_on_mutation ... ok\ntest state::tests::hash_is_order_independent_after_canonicalize ... ok\ntest state::tests::json_roundtrip_bitforbit ... ok\ntest sim::tests::broadcast_reactions_split_by_values ... ok\ntest store::tests::commit_restore_roundtrip_bitforbit ... ok\ntest store::tests::branch_does_not_mutate_main ... ok\ntest store::tests::reset_to_main_restores_exact_hash ... ok\ntest persona::tests::deterministic_population ... ok\ntest persona::tests::sf_is_progressive_on_average ... ok\ntest persona::tests::income_quintiles_monotonic ... ok\ntest religion::tests::unaffiliated_is_plurality_overall ... ok\ntest predict::tests::clustering_bounds_count ... ok\ntest persona::tests::marginals_match_population ... ok\ntest religion::tests::hispanic_skews_catholic_in_aggregate ... ok\ntest aggregate::tests::bootstrap_ci_brackets_point_estimate ... ok\n\ntest result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s\n\n     Running unittests src/bin/daemon.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/daemon-9e71e881ef70a05a)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/ingest_pums.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/ingest_pums-98a32cd8eec7199d)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/server.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/server-c1a59c2adf396479)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running unittests src/bin/validate.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/validate-0d5191213ecd80ab)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/contract.rs (/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/debug/deps/contract-e93e79b3f6d263dd)\n\nrunning 1 test\ntest contract_all_endpoints ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.71s\n\n   Doc-tests sim_maps\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests simfrancisco\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+  },
+  "base_commit": "eca0073ab0fb177824edf2d84401e427b53c57b3",
+  "reviewed_lane_commits": {
+    "backend": "871274dd327c37bf8b9a208c90e754728b7b1893",
+    "map": "c0128fe5abc3112f55fcff06814677b89597e3d0",
+    "chart": "66bdb949fd37a5eefe2658c4c5324e9632cb7d43"
+  },
+  "node": {
+    "command": "node --test frontend/tests/*.test.mjs",
+    "exit": 0,
+    "passed": 43,
+    "stdout": "\u2714 binary option breakdowns preserve Yes/No proportions and weighted/raw counts (7.056417ms)\n\u2714 legacy HashMap breakdowns derive No only for binary polls (0.300916ms)\n\u2714 modern dimensions override legacy; absent dimensions fall back; explicit empties survive (0.458208ms)\n\u2714 multi-option normalization preserves option-label index order (0.501459ms)\n\u2714 ordering is canonical and independent of input map/array insertion order (1.259083ms)\n\u2714 normalization and rendering do not mutate caller data or depend on clock (0.686417ms)\n\u2714 missing evidence never implies verification, including connected Hydra (0.601292ms)\n\u2714 complete attested source renders provenance and a source-only truth label (1.386209ms)\n\u2714 every required metadata field must be present for verified label (0.738417ms)\n\u2714 truth labels require explicit positive attestation and reject negatives/stale/unsafe sources (1.211458ms)\n\u2714 conflicting source aliases and duplicate source identities cannot claim verification (0.476208ms)\n\u2714 single-source evidence adapters support explicit records without defaulting values (0.162834ms)\n\u2714 only absolute http/https URLs become clickable (0.385875ms)\n\u2714 all source/user text and tuple attributes are HTML escaped (0.379792ms)\n\u2714 segments are real buttons with pressed state, accessible labels, and live rule/count (0.320333ms)\n\u2714 thin sample threshold uses raw n and empty groups remain selectable (0.212125ms)\n\u2714 missing breakdowns and malformed inputs degrade without invented zeros (0.298542ms)\n\u2714 invalid option distributions are not renormalized or shown as valid (0.28425ms)\n\u2714 duplicate group conflicts are deterministic and never double-counted (0.2055ms)\n\u2714 selection reducer replaces, combines idempotently, and clears without mutating input (0.242917ms)\n\u2714 summary sums disjoint same-dimension weights but never overlapping dimensions (0.339542ms)\n\u2714 event actions cover click, Shift-click, Enter, Space, and Escape (0.170834ms)\n\u2714 malformed selection and extreme weights do not crash or produce Infinity (0.252583ms)\n\u2714 arrow navigation wraps across segments in all four directions (0.092792ms)\n\u2714 DOM adapter delegates, prevents duplicate key activation, restores focus, and disposes (0.579334ms)\n\u2714 every PollResult dimension can select the same canonical resident on the map (6.11125ms)\n\u2714 reduced motion stops resident time, snaps camera and completes reveal (0.456333ms)\n\u2714 offline fixture hashes match committed snapshots and every bar matches exact resident PWGTP (38.023541ms)\n\u2714 combined groups across dimensions count each resident once (1.015416ms)\n\u2714 offline API exercises all result transports without calling external services (17.711333ms)\n\u2714 single segment matches canonical keys and exact weighted total (3.481125ms)\n\u2714 cross-tab matches its canonical key, without deriving absent cross-tabs (0.249125ms)\n\u2714 AND intersects while OR unions without double counting (0.255916ms)\n\u2714 missing and unknown segments fail closed under both operators (3.555041ms)\n\u2714 malformed selection fails closed instead of accidentally clearing (0.807084ms)\n\u2714 clear restores all residents in source order and full weighted total (0.558875ms)\n\u2714 input agents and selection are not mutated, and index snapshots keys/weights (0.693667ms)\n\u2714 stable ordering does not depend on clause order or duplicate IDs (0.161ms)\n\u2714 invalid weights contribute zero without hiding matching agents (0.199291ms)\n\u2714 SFMap clear preserves verdict state and restores original drawing (4.062667ms)\n\u2714 SFMap reindexes on setAgents and counts unplaced raw residents (0.619ms)\n\u2714 mouse/touch resident taps expose canonical segments and preserve detail; cancel/drag do not select (1.651042ms)\n\u2714 10,000 residents retain deterministic counts across repeated queries (15.858333ms)\n\u2139 tests 43\n\u2139 suites 0\n\u2139 pass 43\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 368.793375\n"
+  },
+  "requested_package_check": {
+    "command": "cargo test -p sim-core",
+    "exit": 101,
+    "stdout": "error: package ID specification `sim-core` did not match any packages\n\nhelp: a package with a similar name exists: `axum-core`\n"
+  },
+  "release_build": {
+    "command": "cargo build --offline --release --locked --bin validate",
+    "exit": 0,
+    "stdout": "   Compiling simfrancisco v0.1.0 (/Users/aradhyamishra/Documents/ChatGPT/hackathon/simtra-evidence-chart/crates/sim-core)\nwarning: stripping debug info with `rust-objcopy` failed: signal: 6 (SIGABRT)\n  |\n  = note: dyld[91826]: Library not loaded: @rpath/libLLVM.dylib\n            Referenced from: <AC0D75A8-23BF-301F-B7CE-3E5CC0C1BC06> /Users/aradhyamishra/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/bin/rust-objcopy\n            Reason: tried: '/Users/aradhyamishra/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/bin/../lib/libLLVM.dylib' (no such file), '/Users/aradhyamishra/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/bin/../lib/libLLVM.dylib' (no such file), '/Users/aradhyamishra/Documents/Codex/2026-09-12/simtra-backend-evidence/target/release/deps/libLLVM.dylib' (no such file), '/Users/aradhyamishra/lib/libLLVM.dylib' (no such file), '/usr/local/lib/libLLVM.dylib' (no such file), '/usr/lib/libLLVM.dylib' (no such file, not in dyld cache)\n          \n\nwarning: `simfrancisco` (bin \"validate\") generated 1 warning\n    Finished `release` profile [optimized] target(s) in 32.17s\n"
+  },
+  "browser": {
+    "cases": [
+      {
+        "name": "a. app boot without console errors",
+        "status": "passed"
+      },
+      {
+        "name": "b. deterministic local binary result and resident reveal",
+        "status": "passed",
+        "mode": "results",
+        "verdicts": 256,
+        "n": 256,
+        "fixture": true
+      },
+      {
+        "name": "c. open demographic chart",
+        "status": "passed"
+      },
+      {
+        "name": "d/f. Women bar selects 117 residents and 10750 PWGTP",
+        "status": "passed",
+        "active": true,
+        "rawMatchingAgents": 117,
+        "weightedPumsCount": 10750,
+        "text": "Active rule: gender = women. Raw resident count: 117. Weighted PWGTP population: 10750.",
+        "domRaw": 117,
+        "domWeight": 10750
+      },
+      {
+        "name": "e. canvas: all matches green, nonmatches dim",
+        "status": "passed",
+        "green": 117,
+        "dim": 139,
+        "full": 117,
+        "bodyCount": 256
+      },
+      {
+        "name": "g. Clear",
+        "status": "passed",
+        "active": false,
+        "rawMatchingAgents": 256,
+        "weightedPumsCount": 25388,
+        "text": "Active rule: none (all residents). Raw resident count: 256. Weighted PWGTP population: 25388.",
+        "domRaw": 256,
+        "domWeight": 25388
+      },
+      {
+        "name": "h. Shift-click union deduplicates weighted residents",
+        "status": "passed",
+        "combined": {
+          "active": true,
+          "rawMatchingAgents": 148,
+          "weightedPumsCount": 14620,
+          "text": "Active rule: age = 25-34 OR gender = women. Raw resident count: 148. Weighted PWGTP population: 14620.",
+          "domRaw": 148,
+          "domWeight": 14620
+        },
+        "independent": {
+          "count": 148,
+          "weight": 14620
+        }
+      },
+      {
+        "name": "touch-accessible Combine control",
+        "status": "passed"
+      },
+      {
+        "name": "i. actual map resident click updates/focuses active Age chart",
+        "status": "passed",
+        "tap": {
+          "x": 736.2229247839622,
+          "y": 172.34090624450806,
+          "id": 3,
+          "key": "25-34"
+        },
+        "selected": {
+          "active": true,
+          "rawMatchingAgents": 66,
+          "weightedPumsCount": 7669,
+          "text": "Active rule: age = 25-34. Raw resident count: 66. Weighted PWGTP population: 7669. Resident 3 selected; chart uses age.",
+          "domRaw": 66,
+          "domWeight": 7669
+        }
+      },
+      {
+        "name": "j. keyboard Enter, Space, arrows and Escape",
+        "status": "passed"
+      },
+      {
+        "name": "visible focus and screen-reader labels",
+        "status": "passed",
+        "width": "3px",
+        "style": "solid",
+        "label": "Age 35\u201344. age: 35-44. Yes: 60.0%; No: 40.0%. Weighted population: 2423. Raw synthetic-agent count: 30. Not selected."
+      },
+      {
+        "name": "Education dimension integration",
+        "status": "passed"
+      },
+      {
+        "name": "closing chart clears selection",
+        "status": "passed"
+      },
+      {
+        "name": "dismiss clears selection",
+        "status": "passed"
+      },
+      {
+        "name": "starting another question clears selection",
+        "status": "passed"
+      },
+      {
+        "name": "multi-option result and chart",
+        "status": "passed"
+      },
+      {
+        "name": "switch city clears stale state",
+        "status": "passed"
+      },
+      {
+        "name": "deleting prediction branch clears selection",
+        "status": "passed"
+      },
+      {
+        "name": "A/B result and chart",
+        "status": "passed"
+      },
+      {
+        "name": "counterfactual result and exposed-arm chart",
+        "status": "passed"
+      },
+      {
+        "name": "reduced-motion map and reveal",
+        "status": "passed",
+        "reduced": true,
+        "frozen": true
+      },
+      {
+        "name": "forced-colors selection is not color-only",
+        "status": "passed",
+        "border": "3px",
+        "pressed": "true",
+        "text": "\u2713 Women"
+      },
+      {
+        "name": "k. 390px mobile layout, targets and Clear",
+        "status": "passed",
+        "viewport": 390,
+        "documentWidth": 390,
+        "cardLeft": 11.703125,
+        "cardRight": 378.296875,
+        "cardHeight": 438.875,
+        "buttonWidth": 312.59375,
+        "buttonHeight": 166,
+        "clientWidth": 367,
+        "scrollWidth": 367
+      },
+      {
+        "name": "no console errors or external network requests",
+        "status": "passed",
+        "errors": [],
+        "external": []
+      }
+    ],
+    "errors": [],
+    "external": []
+  },
+  "touch": {
+    "cases": [
+      {
+        "name": "actual touchscreen Women bar",
+        "status": "passed",
+        "active": true,
+        "rawMatchingAgents": 117,
+        "weightedPumsCount": 10750
+      },
+      {
+        "name": "actual touchscreen combined filter",
+        "status": "passed",
+        "active": true,
+        "rawMatchingAgents": 148,
+        "weightedPumsCount": 14620
+      },
+      {
+        "name": "actual touchscreen Clear",
+        "status": "passed"
+      },
+      {
+        "name": "accessible resident picker uses active age dimension",
+        "status": "passed"
+      },
+      {
+        "name": "legacy resident records degrade to unknown counts without cross-tab errors",
+        "status": "passed"
+      }
+    ],
+    "errors": [],
+    "external": []
+  },
+  "lane_fix_failure_evidence": {
+    "all_dimensions": "\u2716 every PollResult dimension can select the same canonical resident on the map (4.803125ms)\n\u2139 tests 1\n\u2139 suites 0\n\u2139 pass 0\n\u2139 fail 1\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 129.331666\n\n\u2716 failing tests:\n\ntest at frontend/tests/evidence-integration.test.mjs:6:1\n\u2716 every PollResult dimension can select the same canonical resident on the map (4.803125ms)\n  AssertionError [ERR_ASSERTION]: education\n  + actual - expected\n  \n    {\n      active: true,\n  +   rawMatchingAgents: 0,\n  +   weightedPumsCount: 0\n  -   rawMatchingAgents: 1,\n  -   weightedPumsCount: 125\n    }\n  \n      at TestContext.<anonymous> (file:///Users/aradhyamishra/Documents/ChatGPT/hackathon/simtra-evidence-chart/frontend/tests/evidence-integration.test.mjs:13:12)\n      at Test.runInAsyncScope (node:async_hooks:213:14)\n      at Test.run (node:internal/test_runner/test:1095:25)\n      at Test.start (node:internal/test_runner/test:992:17)\n      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: { active: true, rawMatchingAgents: 0, weightedPumsCount: 0 },\n    expected: { active: true, rawMatchingAgents: 1, weightedPumsCount: 125 },\n    operator: 'deepStrictEqual',\n    diff: 'simple'\n  }\n",
+    "reduced_motion": "\u2714 every PollResult dimension can select the same canonical resident on the map (4.317458ms)\n\u2716 reduced motion stops resident time, snaps camera and completes reveal (1.631125ms)\n\u2139 tests 2\n\u2139 suites 0\n\u2139 pass 1\n\u2139 fail 1\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 168.697542\n\n\u2716 failing tests:\n\ntest at frontend/tests/evidence-integration.test.mjs:18:1\n\u2716 reduced motion stops resident time, snaps camera and completes reveal (1.631125ms)\n  AssertionError [ERR_ASSERTION]: resident animation time must freeze\n  \n  0.05 !== 0\n  \n      at TestContext.<anonymous> (file:///Users/aradhyamishra/Documents/ChatGPT/hackathon/simtra-evidence-chart/frontend/tests/evidence-integration.test.mjs:24:10)\n      at Test.runInAsyncScope (node:async_hooks:213:14)\n      at Test.run (node:internal/test_runner/test:1095:25)\n      at Test.processPendingSubtests (node:internal/test_runner/test:777:18)\n      at Test.postRun (node:internal/test_runner/test:1224:19)\n      at Test.run (node:internal/test_runner/test:1152:12)\n      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: 0.05,\n    expected: 0,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n"
+  }
+}

@@ -1,0 +1,5 @@
+.vercel
+
+# Local browser verification artifacts; never published as source evidence.
+.playwright-cli/
+output/playwright/

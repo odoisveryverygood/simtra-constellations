@@ -1,0 +1,945 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Pixel-art city renderer: the golden-future-map whole-city tile image as the
+// base, with 16×16 RPG character sprites walking on top (replacing the dots).
+//
+// Camera model: world space == base-image pixels. The camera animates between
+// "fit the whole city" (overview) and "zoomed into a clicked spot" (detail,
+// fidelity enough to see sprites moving on the roads). A Return button restores
+// the overview. Only the visible source sub-rect of the base image is blitted
+// each frame, and off-screen sprites are culled, so it stays fast at any zoom.
+//
+// The frosted UI chrome lives in the HTML overlay; backdrop-filter can't touch
+// canvas pixels.
+// ─────────────────────────────────────────────────────────────────────────
+
+import { COLORS, TIMING, MAP } from "./config.js";
+import { createSegmentIndex, normalizeSegmentSelection, selectSegments } from "./segment-selection.js";
+
+const POP_MS = 340; // per-sprite verdict pop duration
+
+// sprite sheet 01-generic: 240×128 = 10 chars in 5×2 blocks of 48×64.
+// block c: bx=(c%5)*48, by=floor(c/5)*64. Within a block: 3 cols (frames) × 4
+// rows (facings). row: down0 left1 right2 up3. col: stepA0 idle1 stepB2. cell 16.
+const SHEET = { blockW: 48, blockH: 64, cell: 16, perRow: 5, nChars: 10 };
+const WALK = [1, 0, 1, 2];      // contact-pass-contact-pass
+const WALK_FPS = 8;
+const SPRITE_WORLD = 22;        // sprite footprint in world px (~one 2 m cell ×~)
+// Keep the overview zoomed in enough that residents render as small sprites, not
+// the square overview-LOD (which kicks in below ~9 on-screen px). Bigger cities
+// have much larger tile images, so their fit-to-screen zoom would otherwise fall
+// into squares; this floor makes every city open like SF — small walking sprites.
+const OVERVIEW_SPRITE_PX = 10;
+// overview-LOD colors (one per character) so the zoomed-out crowd still reads as varied
+const CHAR_COLORS = ["#c64f3f", "#3f72c6", "#46a35a", "#8a5fbf", "#caa23c", "#cf6aa0", "#3fb5b0", "#b5713f", "#5a6470", "#d0823f"];
+
+// Pokémon-style thought bubbles (shown when zoomed in)
+const BUBBLE = { maxAtOnce: 7, sep: 165, cycleMs: 2600, font: '600 11px "neue-haas-grotesk-display", -apple-system, sans-serif', maxW: 156 };
+const easeOutBack = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+
+// ── diverse persona thoughts ────────────────────────────────────────────────
+// Each agent's bubble is drawn from its FULL backend persona (value vector +
+// demographics + neighborhood), mixing five modes so 1,200 residents read as
+// 1,200 distinct people rather than one repeated complaint.
+const ISSUE = {
+  s_housing:     ["rent is brutal here", "we need more housing", "another rent hike…", "priced out again", "saving for a place feels hopeless", "three roommates and counting", "my landlord won't fix anything", "just build more homes"],
+  s_crime:       ["is it safe to walk home?", "another car break-in", "tired of the break-ins", "where are the cops?", "they took my catalytic converter", "feels less safe lately", "lock your doors out here", "we need real public safety"],
+  s_homeless:    ["the city has to help folks outside", "so many tents lately", "this isn't working", "we need more shelters", "compassion, not sweeps", "it breaks my heart", "where's the housing-first plan?", "everyone deserves a roof"],
+  s_cost:        ["everything's so expensive", "groceries cost a fortune", "two jobs and still broke", "$18 for a sandwich?!", "this city eats your paycheck", "can I even afford to stay?", "wages haven't kept up", "another surprise fee"],
+  s_environment: ["gotta bike more", "more bike lanes please", "ditching the car today", "recycle, reuse, repeat", "cleaner air would help", "protect the parks", "climate can't wait", "less plastic, please"],
+  s_immigration: ["thinking of family back home", "finally getting my papers", "still new to the city", "sending money home", "learning the ropes here", "proud to be here", "my kids will have it better", "two cultures, one home"],
+};
+// city-neutral fallback chatter (shown only until the per-resident LLM thought
+// arrives, or if that call fails) — nothing here should name a specific city.
+const DAILY = ["need more coffee", "is it Friday yet?", "another meeting today", "what's for dinner?", "parking is impossible", "walking the dog", "running late again", "weekend can't come soon", "long day ahead", "running errands", "traffic's bad today", "gotta call mom back", "love this city honestly", "should've worn a jacket", "off to the gym", "grabbing lunch soon", "so much on my plate", "almost the weekend", "could use a vacation", "where'd the day go?", "another bill due", "time for a break", "kids to pick up", "my feet are killing me"];
+const POL = {
+  prog:  ["the city should do more", "housing is a human right", "tax the rich already", "fund the schools", "we can do better than this"],
+  mod:   ["city hall wastes our money", "enough with the spending", "just want it to work", "common sense, please", "fix the basics first"],
+  notrust:["politicians never listen", "nothing changes around here", "same old at city hall", "who's actually in charge?"],
+  change:["time for something new", "we need real change", "shake things up", "out with the old"],
+};
+const HOOD = [
+  [/Bayview|Hunters/i, ["the city forgets us out here", "Third Street's home", "we deserve investment too"]],
+  [/Richmond|Presidio/i, ["dim sum on Clement after this", "foggy and green out here", "the avenues are peaceful"]],
+  [/Chinatown|North Beach|Russian/i, ["best dumplings are right here", "espresso in North Beach", "the alleys tell stories"]],
+  [/SoMa/i, ["so many empty offices now", "the commute's brutal", "construction everywhere"]],
+  [/Mission/i, ["best tacos in the city", "another mural going up", "the Mission's changing fast"]],
+  [/Bernal|central/i, ["the view from the hill", "village vibes up here", "quiet little corner"]],
+  [/Sunset/i, ["the fog never lifts out here", "the ocean's right there", "quiet in the avenues"]],
+  [/Ingleside|Oceanview/i, ["quiet side of town", "City College's right here", "underrated neighborhood"]],
+  [/Marina|Western Addition/i, ["perfect day by the bay", "brunch by the water", "jog along the marina"]],
+];
+const YOUNG = ["rent eats my whole check", "trying to make it here", "first apartment grind", "building a life here"];
+const OLD = ["this city's changed so much", "miss how it used to be", "watching it all change", "lived here for decades", "so many new faces now", "the old days were simpler"];
+
+function mulberry32(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const pickFrom = (rng, arr) => arr[(rng() * arr.length) | 0];
+
+// active city slug — the SF-specific neighbourhood flavour only applies to SF;
+// every other city's residents get the LLM thought (or the neutral fallback).
+let CITY = "sf";
+
+function makeThought(a, id) {
+  const rng = mulberry32((id >>> 0) * 2654435761 + 12345);
+  const v = a.values || {};
+  const age = a.age || 40;
+  const hood = a.neighborhood || a.hood || "";
+  // weighted mode choice: issues dominate but daily life + flavor keep it varied
+  const r = rng();
+  if (r < 0.40) {
+    // weighted-random issue (not argmax) so the same person isn't always on rent
+    const keys = ["s_housing", "s_crime", "s_homeless", "s_cost", "s_environment", "s_immigration"];
+    const weights = keys.map((k) => Math.max(0.05, (v[k] ?? 0.4)) ** 2);
+    let tot = weights.reduce((s, w) => s + w, 0), x = rng() * tot, pick = keys[0];
+    for (let i = 0; i < keys.length; i++) { x -= weights[i]; if (x <= 0) { pick = keys[i]; break; } }
+    return pickFrom(rng, ISSUE[pick]);
+  }
+  if (r < 0.68) return pickFrom(rng, DAILY);
+  if (r < 0.82) {
+    if (age < 28 && rng() < 0.6) return pickFrom(rng, YOUNG);
+    if (age > 64 && rng() < 0.6) return pickFrom(rng, OLD);
+  }
+  if (r < 0.90) {
+    if (CITY === "sf") { for (const [re, arr] of HOOD) if (re.test(hood)) return pickFrom(rng, arr); }
+    return pickFrom(rng, DAILY);
+  }
+  // political mood from the value vector
+  const soc = v.social ?? 0, trust = v.trust ?? 0, change = v.change ?? 0;
+  if (trust < -0.25 && rng() < 0.5) return pickFrom(rng, POL.notrust);
+  if (change > 0.3 && rng() < 0.5) return pickFrom(rng, POL.change);
+  return pickFrom(rng, soc < -0.2 ? POL.prog : POL.mod);
+}
+
+const REACT_YES = ["I'm a yes on this", "voting yes for sure", "yeah, count me in", "this gets my vote", "yes — about time", "leaning yes", "makes sense to me", "finally, yes"];
+const REACT_NO = ["hard no for me", "I'm voting no", "no way", "not convinced", "this is a no", "leaning no", "not buying it", "nope, not this"];
+function verdictReaction(verdict, id) {
+  const rng = mulberry32((id >>> 0) * 40503 + 7);
+  return pickFrom(rng, verdict === "yes" ? REACT_YES : REACT_NO);
+}
+const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+export class SFMap {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.agents = [];
+    this._segmentIndex = createSegmentIndex([]);
+    this._segmentSelection = normalizeSegmentSelection(null);
+    this._segmentResult = selectSegments(this._segmentIndex, this._segmentSelection);
+
+    this.imgW = 2144; this.imgH = 1920;           // updated when base loads
+    this.satellite = false;
+    this.satelliteTiles = new Map();
+    this.base = new Image(); this.baseReady = false; this.landMask = null; this.landBox = null;
+    this.base.onload = () => {
+      this.imgW = this.base.naturalWidth; this.imgH = this.base.naturalHeight;
+      this.baseReady = true; this._fitOverview(true); this._buildLandMask();
+    };
+    this.base.src = MAP.base;
+    this.sprite = new Image(); this.spriteReady = false;
+    this.sprite.onload = () => { this.spriteReady = true; };
+    this.sprite.src = MAP.sprites;
+
+    this.cam = { x: 1072, y: 960, zoom: 0.4 };
+    this.camTarget = { ...this.cam };
+    this.zoomedIn = false;
+    this.onZoomChange = null;                      // (zoomedIn:boolean) => {}
+    this.onResidentSelect = null;                  // ({ id, segments }) => {} — canonical chart keys
+    this.onSpriteTap = null;                       // (sprite) => {}  tap a character
+    this.onEmptyTap = null;                        // () => bool      tap empty space (return true to suppress zoom)
+
+    this.mode = "idle";                            // idle|waiting|reveal|results|clearing
+    this.t0 = performance.now();
+    this.lastT = this.t0;
+    this.revealT0 = 0; this.revealDur = TIMING.revealMs;
+    this.clearT0 = 0; this.clearFade = 1; this.revealCount = 0;
+    this.onProgress = null; this.onRevealComplete = null;
+    this.bubbleIdx = []; this.bubbleT = 0;   // which sprites currently show a thought bubble
+    this.branchId = null;                          // current branch (for sparse LLM chatter)
+    this.chatterAsked = new Set();                 // resident ids already requested
+    this.onNeedChatter = null;                     // (ids:number[]) => void  — app fetches + setThought
+    this._raf = null;
+
+    this._loop = this._loop.bind(this);
+    this.resize = this.resize.bind(this);
+    window.addEventListener("resize", this.resize);
+    this._setupPointer();                          // tap-to-zoom · drag-to-pan · pinch-zoom
+    this.resize();
+  }
+
+  // legacy hook from the old vector map — the pixel base replaces the outline.
+  setOutline() {}
+
+  setSatellite(enabled) {
+    this.satellite = Boolean(enabled);
+    this.satelliteTiles.clear();
+  }
+
+  // Point the chatter system at the active city + branch (clears the request log).
+  setSim(slug, branchId) {
+    CITY = slug || "sf";
+    this.branchId = branchId || null;
+    this.chatterAsked = new Set();
+  }
+
+  // Replace a resident's thought with its LLM-generated one (matched by backend id).
+  setThought(id, text) {
+    if (!text) return;
+    for (const a of this.agents) if (a.seed === id) { a.thought = text; return; }
+  }
+
+  // Ask the app to fetch LLM chatter for the on-screen residents we haven't yet
+  // requested (sparse + batched; results come back through setThought).
+  _requestChatter() {
+    if (!this.branchId || !this.onNeedChatter || !this.bubbleIdx.length) return;
+    const ids = [];
+    for (const i of this.bubbleIdx) {
+      const a = this.agents[i];
+      if (a && a.seed != null && !this.chatterAsked.has(a.seed)) {
+        this.chatterAsked.add(a.seed);
+        ids.push(a.seed);
+      }
+    }
+    if (ids.length) this.onNeedChatter(ids);
+  }
+
+  // Swap the city: load a new base tile image (MAP.base/MAP.bbox are already
+  // updated by the caller) and rebuild the land mask + overview around it. Agents
+  // are cleared so they don't linger on the old map until the caller re-seeds them.
+  setBase(src, maskSrc = null) {
+    this.setAgents([]);
+    this.clearSegmentSelection();
+    this.clearVerdicts();
+    this.bubbleIdx = [];
+    this.baseReady = false;
+    this.landMask = null;
+    this.landBox = null;
+    this.satelliteTiles.clear();
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      this.base = img;
+      this.imgW = img.naturalWidth; this.imgH = img.naturalHeight;
+      this.baseReady = true;
+      this._fitOverview(true);
+      if (maskSrc) {
+        const mask = new Image();
+        mask.onload = () => this._buildLandMask(mask);
+        mask.onerror = () => { console.warn("land mask failed to load:", maskSrc); this._fitOverview(true); };
+        mask.src = maskSrc;
+      } else {
+        this._buildLandMask();
+      }
+    };
+    img.onerror = () => {
+      console.warn("satellite imagery failed to load; using city tiles:", src);
+      if (maskSrc && src !== maskSrc) this.setBase(maskSrc);
+    };
+    img.src = src;
+  }
+
+  _satTile(z, x, y) {
+    const n = 2 ** z;
+    if (y < 0 || y >= n) return null;
+    const wrappedX = ((x % n) + n) % n;
+    const key = `${z}/${wrappedX}/${y}`;
+    let tile = this.satelliteTiles.get(key);
+    if (!tile) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      tile = { img, ready: false, failed: false };
+      img.onload = () => { tile.ready = true; };
+      img.onerror = () => { tile.failed = true; };
+      img.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${wrappedX}`;
+      this.satelliteTiles.set(key, tile);
+    }
+    return tile;
+  }
+
+  _drawSatelliteTile(ctx, z, x, y, dx, dy, dw, dh) {
+    const tile = this._satTile(z, x, y);
+    if (tile?.ready) {
+      ctx.drawImage(tile.img, dx, dy, dw + .6, dh + .6);
+      return;
+    }
+    // While a sharper zoom level streams in, stretch the already-cached parent
+    // quadrant. Zooming therefore never flashes blue or cuts the map away.
+    for (let d = 1; d <= 3; d++) {
+      const scale = 2 ** d;
+      const px = Math.floor(x / scale), py = Math.floor(y / scale);
+      const parent = this._satTile(z - d, px, py);
+      if (!parent?.ready) continue;
+      const sw = 256 / scale;
+      const sx = ((x % scale) + scale) % scale * sw;
+      const sy = ((y % scale) + scale) % scale * sw;
+      ctx.drawImage(parent.img, sx, sy, sw, sw, dx, dy, dw + .6, dh + .6);
+      return;
+    }
+  }
+
+  _drawLocalBase(ctx) {
+    const z = this.cam.zoom;
+    let l = this.cam.x - (this.cssW / 2) / z, t = this.cam.y - (this.cssH / 2) / z;
+    let r = this.cam.x + (this.cssW / 2) / z, b = this.cam.y + (this.cssH / 2) / z;
+    l = Math.max(0, l); t = Math.max(0, t); r = Math.min(this.imgW, r); b = Math.min(this.imgH, b);
+    if (r <= l || b <= t) return;
+    const d = this.worldToScreen(l, t);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.base, l, t, r - l, b - t, d.x, d.y, (r - l) * z, (b - t) * z);
+  }
+
+  _drawSatellite(ctx) {
+    const zCam = this.cam.zoom;
+    const b = MAP.bbox;
+    const visible = {
+      l: this.cam.x - (this.cssW / 2) / zCam,
+      r: this.cam.x + (this.cssW / 2) / zCam,
+      t: this.cam.y - (this.cssH / 2) / zCam,
+      b: this.cam.y + (this.cssH / 2) / zCam,
+    };
+    const worldLon = (x) => b.west + (x / this.imgW) * (b.east - b.west);
+    const worldLat = (y) => b.north - (y / this.imgH) * (b.north - b.south);
+    const tileX = (lon, z) => ((lon + 180) / 360) * 2 ** z;
+    const tileY = (lat, z) => {
+      const rad = Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI / 180;
+      return (1 - Math.asinh(Math.tan(rad)) / Math.PI) / 2 * 2 ** z;
+    };
+    const lonAt = (x, z) => x / 2 ** z * 360 - 180;
+    const latAt = (y, z) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / 2 ** z))) * 180 / Math.PI;
+
+    // Pick the first level whose source pixels are at least as dense as screen
+    // pixels. Overview uses a handful of small tiles; detail zoom gets fresh,
+    // high-resolution imagery instead of magnifying one fixed bitmap.
+    const desired = Math.ceil(Math.log2(360 * this.imgW * zCam / ((b.east - b.west) * 256)));
+    const z = Math.max(9, Math.min(18, desired));
+    const minX = Math.floor(tileX(worldLon(visible.l), z));
+    const maxX = Math.floor(tileX(worldLon(visible.r), z));
+    const minY = Math.floor(tileY(worldLat(visible.t), z));
+    const maxY = Math.floor(tileY(worldLat(visible.b), z));
+
+    ctx.imageSmoothingEnabled = true;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const wx0 = (lonAt(x, z) - b.west) / (b.east - b.west) * this.imgW;
+        const wx1 = (lonAt(x + 1, z) - b.west) / (b.east - b.west) * this.imgW;
+        const wy0 = (b.north - latAt(y, z)) / (b.north - b.south) * this.imgH;
+        const wy1 = (b.north - latAt(y + 1, z)) / (b.north - b.south) * this.imgH;
+        const p = this.worldToScreen(wx0, wy0);
+        this._drawSatelliteTile(ctx, z, x, y, p.x, p.y, (wx1 - wx0) * zCam, (wy1 - wy0) * zCam);
+      }
+    }
+  }
+
+  // shims used by app.js: verdict field sizing + offline fallback scatter.
+  get proj() {
+    return {
+      planarSize: { w: this.imgW, h: this.imgH },
+      bbox: { minLon: MAP.bbox.west, maxLon: MAP.bbox.east, minLat: MAP.bbox.south, maxLat: MAP.bbox.north },
+    };
+  }
+  get inside() { return { inside: () => true, clamp: (lon, lat) => [lon, lat] }; }
+
+  lonlatToWorld(lon, lat) {
+    const b = MAP.bbox;
+    return {
+      x: ((lon - b.west) / (b.east - b.west)) * this.imgW,
+      y: ((b.north - lat) / (b.north - b.south)) * this.imgH,
+    };
+  }
+
+  // raw: [{ lonlat:[lon,lat], ... }]
+  setAgents(raw) {
+    this._charById = null;
+    this._segmentIndex = createSegmentIndex(raw);
+    this._segmentResult = selectSegments(this._segmentIndex, this._segmentSelection);
+    this.agents = raw
+      .map((a, rawIndex) => ({ a, rawIndex }))
+      .filter(({ a }) => Array.isArray(a?.lonlat))
+      .map(({ a, rawIndex }, i) => {
+        const w0 = this.lonlatToWorld(a.lonlat[0], a.lonlat[1]);
+        const w = this._snapToLand(w0.x, w0.y);   // keep every resident on land
+        const ang = Math.random() * Math.PI * 2;
+        return {
+          wx: w.x, wy: w.y,
+          hx: w.x, hy: w.y,                 // verdict-field home (world px)
+          char: i % SHEET.nChars,
+          dir: 0, frame: 1, frameClock: Math.random() * 1000,
+          ang, speed: 5 + Math.random() * 9, // world px/sec
+          turnClock: Math.random() * 2.5,
+          verdict: null, activateAt: 0,
+          seed: a.id ?? i,
+          segmentIndex: rawIndex,
+          segments: this._segmentIndex.segments[rawIndex],
+          thought: makeThought(a, a.id ?? i),   // diverse persona thought (backend value vector + demographics)
+          rationale: null,                       // set from a poll's sample_rationales
+          // seeded persona, surfaced when you tap a character
+          name: a.name, age: a.age, race: a.race_eth, educ: a.educ,
+          job: a.occupation, hood: a.neighborhood, values: a.values, action: a.action,
+        };
+      });
+  }
+
+  // Selection is independent of verdict/reveal state. Changes are immediate,
+  // with no added animation (including under prefers-reduced-motion).
+  setSegmentSelection(selection) {
+    this._segmentSelection = normalizeSegmentSelection(selection);
+    this._segmentResult = selectSegments(this._segmentIndex, this._segmentSelection);
+    return this.getSegmentSelectionSummary();
+  }
+
+  clearSegmentSelection() { return this.setSegmentSelection(null); }
+
+  // Counts cover ALL raw residents from setAgents, including unplaced residents.
+  // No selection means the full population; active distinguishes this from a filter.
+  getSegmentSelectionSummary() { return { ...this._segmentResult.summary }; }
+
+  // Build a land/water mask from the base image so sprites never wander into the
+  // bay/ocean. Water in sf_tiles.png is deep blue rgb(33,92,129) (+ wave variants);
+  // everything else (grass, roads, buildings, sand) is land. Same-origin image, so
+  // getImageData is allowed.
+  _buildLandMask(source = this.base) {
+    try {
+      const oc = document.createElement("canvas");
+      oc.width = this.imgW; oc.height = this.imgH;
+      const octx = oc.getContext("2d", { willReadFrequently: true });
+      octx.imageSmoothingEnabled = false;
+      octx.drawImage(source, 0, 0, this.imgW, this.imgH);
+      const data = octx.getImageData(0, 0, this.imgW, this.imgH).data;
+      const mask = new Uint8Array(this.imgW * this.imgH);
+      let minX = this.imgW, minY = this.imgH, maxX = 0, maxY = 0, x = 0, y = 0;
+      for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
+        const r = data[p], g = data[p + 1], b = data[p + 2];
+        const water = b > 100 && b - r > 28 && b - g > 12;   // blue-dominant
+        mask[i] = water ? 0 : 1;                              // 1 = land
+        if (!water) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+        if (++x === this.imgW) { x = 0; y++; }
+      }
+      this.landMask = mask;
+      // landmass bounding box → fit the overview to the CITY, not the water margins
+      this.landBox = maxX > minX ? { minX, minY, maxX, maxY } : null;
+    } catch (e) {
+      console.warn("land mask unavailable:", e);
+      this.landMask = null; this.landBox = null;
+    }
+    if (!this.zoomedIn) this._fitOverview(true);   // re-fit now that we know the land box
+    // snap any already-placed agents onto land
+    for (const a of this.agents) {
+      const s = this._snapToLand(a.wx, a.wy);
+      a.wx = s.x; a.wy = s.y; a.hx = s.x; a.hy = s.y;
+    }
+  }
+
+  _isLand(wx, wy) {
+    if (!this.landMask) return true;
+    const x = wx | 0, y = wy | 0;
+    if (x < 0 || y < 0 || x >= this.imgW || y >= this.imgH) return false;
+    return this.landMask[y * this.imgW + x] === 1;
+  }
+
+  // nearest land pixel via an outward spiral (most agents are already on land)
+  _snapToLand(wx, wy) {
+    if (this._isLand(wx, wy)) return { x: wx, y: wy };
+    for (let r = 2; r <= 260; r += 2) {
+      for (let a = 0; a < 16; a++) {
+        const ang = (a / 16) * Math.PI * 2;
+        const nx = wx + Math.cos(ang) * r, ny = wy + Math.sin(ang) * r;
+        if (this._isLand(nx, ny)) return { x: nx, y: ny };
+      }
+    }
+    return { x: this.imgW / 2, y: this.imgH / 2 };
+  }
+
+  // ── camera ───────────────────────────────────────────────────────────────
+  // Overview fits the CITY (land bounding box) to the screen, not the full image —
+  // so on a tall phone the city fills the viewport instead of shrinking into a band.
+  _fitZoom() {
+    const pad = 10;
+    if (this.landBox) {
+      const lw = this.landBox.maxX - this.landBox.minX, lh = this.landBox.maxY - this.landBox.minY;
+      return Math.min((this.cssW - pad * 2) / lw, (this.cssH - pad * 2) / lh);
+    }
+    return Math.min(this.cssW / this.imgW, this.cssH / this.imgH);
+  }
+  _fitCenter() {
+    if (this.landBox) return { x: (this.landBox.minX + this.landBox.maxX) / 2, y: (this.landBox.minY + this.landBox.maxY) / 2 };
+    return { x: this.imgW / 2, y: this.imgH / 2 };
+  }
+  // overview zoom = fit-to-screen, but never so far out that sprites become squares
+  _overviewZoom() { return Math.max(this._fitZoom(), OVERVIEW_SPRITE_PX / SPRITE_WORLD); }
+  _minZoom() { return this._overviewZoom(); }
+
+  _fitOverview(snap) {
+    const z = this._overviewZoom();
+    const c = this._fitCenter();
+    this.camTarget = { x: c.x, y: c.y, zoom: z };
+    this.zoomedIn = false;
+    if (snap) this.cam = { ...this.camTarget };
+    this.onZoomChange && this.onZoomChange(false);
+  }
+
+  zoomTo(wx, wy) {
+    // detail zoom is clamped to an absolute range so "zoomed in" looks the same
+    // (crisp, walkable) on a phone and a desktop, regardless of the overview scale.
+    const z = Math.min(3.0, Math.max(2.0, this._fitZoom() * MAP.detailZoomMul));
+    this.camTarget = this._clamped({ x: wx, y: wy, zoom: z });
+    this.zoomedIn = true;
+    this.onZoomChange && this.onZoomChange(true);
+  }
+
+  returnToOverview() { this._fitOverview(false); }
+
+  // keep the camera centre such that the viewport stays over the image
+  _clamped(c) {
+    const halfW = (this.cssW / 2) / c.zoom;
+    const halfH = (this.cssH / 2) / c.zoom;
+    let x = c.x, y = c.y;
+    if (this.imgW * c.zoom > this.cssW) x = Math.max(halfW, Math.min(this.imgW - halfW, x));
+    else x = this.imgW / 2;
+    if (this.imgH * c.zoom > this.cssH) y = Math.max(halfH, Math.min(this.imgH - halfH, y));
+    else y = this.imgH / 2;
+    return { x, y, zoom: c.zoom };
+  }
+
+  screenToWorld(sx, sy) {
+    return { x: this.cam.x + (sx - this.cssW / 2) / this.cam.zoom, y: this.cam.y + (sy - this.cssH / 2) / this.cam.zoom };
+  }
+  worldToScreen(wx, wy) {
+    return { x: (wx - this.cam.x) * this.cam.zoom + this.cssW / 2, y: (wy - this.cam.y) * this.cam.zoom + this.cssH / 2 };
+  }
+
+  // Unified pointer input (mouse + touch): tap → zoom to that spot; drag → pan
+  // (when zoomed in); two-finger pinch → zoom around the midpoint. Works on phones.
+  _setupPointer() {
+    const c = this.canvas;
+    c.style.touchAction = "none";   // we handle gestures ourselves
+    const pts = new Map();
+    let moved = 0, lastX = 0, lastY = 0, startDist = 0, startZoom = 0;
+    const rect = () => c.getBoundingClientRect();
+    const panBy = (dxScreen, dyScreen) => {
+      this.camTarget.x -= dxScreen / this.cam.zoom;
+      this.camTarget.y -= dyScreen / this.cam.zoom;
+      this.camTarget = this._clamped(this.camTarget);
+      this.cam.x = this.camTarget.x; this.cam.y = this.camTarget.y; // immediate while dragging
+    };
+    c.addEventListener("pointerdown", (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { c.setPointerCapture(e.pointerId); } catch {}
+      if (pts.size === 1) { moved = 0; lastX = e.clientX; lastY = e.clientY; }
+      else if (pts.size === 2) { moved = Infinity; const [a, b] = [...pts.values()]; startDist = Math.hypot(a.x - b.x, a.y - b.y); startZoom = this.cam.zoom; }
+    });
+    c.addEventListener("pointermove", (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size >= 2) {
+        const [a, b] = [...pts.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        if (startDist > 0) {
+          const r = rect();
+          const mx = (a.x + b.x) / 2 - r.left, my = (a.y + b.y) / 2 - r.top;
+          const wb = this.screenToWorld(mx, my);
+          const z = Math.min(4.0, Math.max(this._minZoom(), startZoom * (dist / startDist)));
+          this.cam.zoom = z; this.camTarget.zoom = z;
+          const wa = this.screenToWorld(mx, my);
+          this.camTarget.x += wb.x - wa.x; this.camTarget.y += wb.y - wa.y;
+          this.camTarget = this._clamped(this.camTarget);
+          this.cam.x = this.camTarget.x; this.cam.y = this.camTarget.y;
+          const zi = z > this._minZoom() * 1.4;
+          if (zi !== this.zoomedIn) { this.zoomedIn = zi; this.onZoomChange && this.onZoomChange(zi); }
+        }
+        moved += 30;
+        return;
+      }
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      if (this.zoomedIn) panBy(dx, dy);
+    });
+    const end = (e) => {
+      if (!pts.has(e.pointerId)) return;
+      const wasSingle = pts.size === 1;
+      pts.delete(e.pointerId);
+      try { c.releasePointerCapture(e.pointerId); } catch {}
+      if (pts.size < 2) startDist = 0;
+      if (e.type !== "pointercancel" && wasSingle && moved < 8) {            // a tap (not a drag)
+        const r = rect();
+        const tx = e.clientX - r.left, ty = e.clientY - r.top;
+        if (this.zoomedIn) {
+          const hit = this._hitSprite(tx, ty);
+          if (hit) {
+            // Capture canonical keys before either consumer handles the tap.
+            const resident = { id: hit.seed, segments: { ...hit.segments } };
+            try { this.onSpriteTap && this.onSpriteTap(hit); }  // preserve character detail
+            finally { this.onResidentSelect && this.onResidentSelect(resident); }
+            return;
+          }
+          if (this.onEmptyTap && this.onEmptyTap()) return;                  // app closed an open card
+        } else if (this.onResidentSelect) {
+          // Overview still zooms as before, while also selecting a tapped resident.
+          const hit = this._hitSprite(tx, ty, true);
+          if (hit) this.onResidentSelect({ id: hit.seed, segments: { ...hit.segments } });
+        }
+        const w = this.screenToWorld(tx, ty);
+        this.zoomTo(w.x, w.y);                  // empty space (or overview) → zoom in
+      }
+    };
+    c.addEventListener("pointerup", end);
+    c.addEventListener("pointercancel", end);
+
+    // Trackpad pinch (a wheel event with ctrlKey) + mouse wheel / two-finger
+    // scroll → zoom around the cursor, mirroring the touch-pinch behavior.
+    c.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const r = rect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const wb = this.screenToWorld(mx, my);                    // world point under cursor (before)
+      const k = e.ctrlKey ? 0.012 : 0.0022;                     // pinch is finer than a wheel notch
+      const z = Math.min(4.0, Math.max(this._minZoom(), this.camTarget.zoom * Math.exp(-e.deltaY * k)));
+      this.cam.zoom = z; this.camTarget.zoom = z;
+      const wa = this.screenToWorld(mx, my);                    // same point under cursor (after)
+      this.camTarget.x += wb.x - wa.x; this.camTarget.y += wb.y - wa.y;   // keep it pinned under the cursor
+      this.camTarget = this._clamped(this.camTarget);
+      this.cam.x = this.camTarget.x; this.cam.y = this.camTarget.y;
+      const zi = z > this._minZoom() * 1.4;
+      if (zi !== this.zoomedIn) { this.zoomedIn = zi; this.onZoomChange && this.onZoomChange(zi); }
+    }, { passive: false });
+  }
+
+  // Nearest character; chart selection can opt into small overview sprites.
+  _hitSprite(sx, sy, allowOverview = false) {
+    const drawPx = Math.max(3, SPRITE_WORLD * this.cam.zoom);
+    if (drawPx < 14 && !allowOverview) return null;
+    const rx = drawPx * 0.55, ry = drawPx * 0.9;
+    let best = null, bestD = Infinity;
+    for (const a of this.agents) {
+      const s = this.worldToScreen(a.wx, a.wy);     // feet
+      const cx = s.x, cy = s.y - drawPx * 0.5;       // body centre
+      if (Math.abs(sx - cx) > rx || Math.abs(sy - cy) > ry) continue;
+      const d = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
+      if (d < bestD) { bestD = d; best = a; }
+    }
+    return best;
+  }
+
+  // draw a character's idle portrait into a small canvas (for the inspector card)
+  // sprite character index for a resident id (the timeline and charts draw the
+  // same face the map walks around with)
+  charOf(agentId) {
+    if (!this._charById) this._charById = new Map(this.agents.map((a) => [a.seed, a.char]));
+    return this._charById.get(agentId) ?? (Number(agentId) % SHEET.nChars);
+  }
+
+  // head-and-shoulders crop of the idle frame: the top 11 of the 16 sprite rows
+  drawHeadTo(canvas, agentId) {
+    if (!this.spriteReady || !canvas) return;
+    const char = this.charOf(agentId);
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const bx = (char % SHEET.perRow) * SHEET.blockW;
+    const by = Math.floor(char / SHEET.perRow) * SHEET.blockH;
+    const sx = bx + 1 * SHEET.cell, sy = by + 0 * SHEET.cell;
+    const rows = 11;
+    const scale = canvas.height / rows;
+    const w = SHEET.cell * scale;
+    ctx.drawImage(this.sprite, sx, sy, SHEET.cell, rows, (canvas.width - w) / 2, 0, w, canvas.height);
+  }
+
+  drawCharTo(canvas, char) {
+    if (!this.spriteReady || !canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const bx = (char % SHEET.perRow) * SHEET.blockW;
+    const by = Math.floor(char / SHEET.perRow) * SHEET.blockH;
+    const sx = bx + 1 * SHEET.cell, sy = by + 0 * SHEET.cell;   // frame 1 (idle), dir 0 (down)
+    ctx.drawImage(this.sprite, sx, sy, SHEET.cell, SHEET.cell, 0, 0, canvas.width, canvas.height);
+  }
+
+  resize() {
+    const w = this.canvas.clientWidth || window.innerWidth;
+    const h = this.canvas.clientHeight || window.innerHeight;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.round(w * this.dpr);
+    this.canvas.height = Math.round(h * this.dpr);
+    this.cssW = w; this.cssH = h;
+    if (!this.zoomedIn) this._fitOverview(true);
+    else this.camTarget = this._clamped(this.camTarget);
+  }
+
+  // ── state transitions (same surface app.js drives) ─────────────────────────
+  setWaiting() { this.mode = "waiting"; }
+
+  startReveal(verdicts, durationMs = TIMING.revealMs) {
+    if (this.reducedMotion) durationMs = 0;
+    this.revealDur = durationMs;
+    const now = performance.now();
+    this.revealT0 = now; this.clearFade = 1;
+    const spread = durationMs * 0.82;
+    this.agents.forEach((a, i) => { a.verdict = verdicts[i]; a.activateAt = this.reducedMotion ? now - POP_MS : now + Math.random() * spread; });
+    this.revealCount = 0; this.mode = "reveal";
+  }
+
+  clearVerdicts() {
+    for (const a of this.agents) a.rationale = null;
+    if (this.reducedMotion) { for (const a of this.agents) a.verdict = null; this.mode = "idle"; this.clearFade = 1; return; }
+    if (this.mode === "idle") return;
+    this.clearT0 = performance.now(); this.mode = "clearing";
+  }
+
+  // distribute a poll's real sample_rationales across agents as thought bubbles
+  setRationales(rationales) {
+    const arr = (rationales || []).filter(Boolean);
+    if (!arr.length) return;
+    for (let i = 0; i < this.agents.length; i++) this.agents[i].rationale = arr[i % arr.length];
+  }
+
+  start() { if (!this._raf) { this.lastT = performance.now(); this._raf = requestAnimationFrame(this._loop); } }
+  stop() { if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; } }
+
+  // ── render loop ───────────────────────────────────────────────────────────
+  _loop(now) { this._raf = requestAnimationFrame(this._loop); this._draw(now); }
+
+  _draw(now) {
+    const ctx = this.ctx;
+    const dt = this.reducedMotion ? 0 : Math.min(0.05, (now - this.lastT) / 1000);
+    this.lastT = now;
+
+    // animate camera toward target (snappy critically-damped-ish lerp)
+    const k = this.reducedMotion ? 1 : 1 - Math.pow(0.0001, dt); // ~time-constant independent of fps
+    this.cam.x = lerp(this.cam.x, this.camTarget.x, k);
+    this.cam.y = lerp(this.cam.y, this.camTarget.y, k);
+    this.cam.zoom = lerp(this.cam.zoom, this.camTarget.zoom, k);
+
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.fillStyle = COLORS.water;
+    ctx.fillRect(0, 0, this.cssW, this.cssH);
+
+    // Satellite mode paints just the visible multi-resolution tiles. The local
+    // pixel base remains an instant fallback and the source of the land mask.
+    if (this.baseReady) {
+      this._drawLocalBase(ctx);
+      if (this.satellite) this._drawSatellite(ctx);
+    }
+
+    // clearing fade factor
+    if (this.mode === "clearing") {
+      const f = clamp01((now - this.clearT0) / TIMING.fadeBackMs);
+      this.clearFade = 1 - f;
+      if (f >= 1) { for (const a of this.agents) a.verdict = null; this.clearFade = 1; this.mode = "idle"; this.revealCount = 0; }
+    }
+
+    this._drawSprites(now, dt);
+    if (!this.reducedMotion) this._updateBubbles(now);
+    this._drawBubbles();
+
+    // reveal progress + completion (unchanged contract for app.js)
+    if (this.mode === "reveal") {
+      let revealed = 0;
+      for (const a of this.agents) if (a.verdict && now >= a.activateAt) revealed++;
+      if (revealed !== this.revealCount) { this.revealCount = revealed; this.onProgress && this.onProgress(revealed, this.agents.length); }
+      if (this.reducedMotion || now > this.revealT0 + this.revealDur + POP_MS) {
+        this.revealCount = this.agents.length;
+        this.onProgress && this.onProgress(this.agents.length, this.agents.length);
+        this.mode = "results";
+        this.onRevealComplete && this.onRevealComplete();
+      }
+    }
+  }
+
+  _drawSprites(now, dt) {
+    const ctx = this.ctx;
+    const z = this.cam.zoom;
+    const drawPx = Math.max(3, SPRITE_WORLD * z);          // on-screen sprite height
+    const showVerdict = this.mode === "reveal" || this.mode === "results" || this.mode === "clearing";
+    const breathing = this.mode === "waiting" && !this.reducedMotion;
+    const margin = drawPx * 2;
+    const spriteOk = this.spriteReady;
+    const selection = this._segmentResult;
+    const selecting = selection.summary.active;
+
+    for (const a of this.agents) {
+      // wander: occasionally pick a new heading; integrate but never step into water
+      a.turnClock -= dt;
+      if (a.turnClock <= 0) { a.ang += (Math.random() - 0.5) * 1.6; a.turnClock = 1.2 + Math.random() * 2.4; }
+      const vx = Math.cos(a.ang) * a.speed, vy = Math.sin(a.ang) * a.speed;
+      const nx = a.wx + vx * dt, ny = a.wy + vy * dt;
+      if (this._isLand(nx, ny)) { a.wx = nx; a.wy = ny; }
+      else { a.ang += Math.PI * 0.65 + (Math.random() - 0.5) * 0.8; a.turnClock = 0.25; } // turn off the shoreline
+      // facing from velocity (down0 left1 right2 up3)
+      a.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 1 : 2) : (vy < 0 ? 3 : 0);
+      // walk frame cycle
+      a.frameClock += dt * 1000;
+      const fi = Math.floor(a.frameClock / (1000 / WALK_FPS)) % WALK.length;
+      a.frame = WALK[fi];
+
+      const s = this.worldToScreen(a.wx, a.wy);
+      if (s.x < -margin || s.x > this.cssW + margin || s.y < -margin || s.y > this.cssH + margin) continue;
+
+      // verdict pop scale
+      let vScale = 0;
+      if (showVerdict && a.verdict) {
+        const local = now - a.activateAt;
+        if (local >= 0) vScale = (this.reducedMotion ? 1 : easeOutBack(clamp01(local / POP_MS))) * this.clearFade;
+      }
+
+      const w = drawPx, h = drawPx;
+      const footX = s.x, footY = s.y;     // feet anchored to the cell
+      const matched = selecting && selection.matchMask[a.segmentIndex] === 1;
+      const selectionAlpha = selecting && !matched ? 0.25 : 1;
+
+      if (drawPx < 9 || !spriteOk) {
+        // overview LOD: a cheap colored square per agent (keeps 10k sprites at 60fps;
+        // blitting 10k sprite cells every frame would be far heavier)
+        const sz = Math.max(2, Math.round(drawPx * 0.6));
+        ctx.globalAlpha = (breathing ? 0.5 + 0.4 * Math.sin(now / 240 + a.wx) : 0.92) * selectionAlpha;
+        ctx.fillStyle = CHAR_COLORS[a.char % CHAR_COLORS.length];
+        ctx.fillRect(Math.round(footX - sz / 2), Math.round(footY - sz), sz, sz);
+        ctx.globalAlpha = 1;
+      } else {
+        // detail: the actual 16×16 character (depth via feet anchor)
+        const bx = (a.char % SHEET.perRow) * SHEET.blockW;
+        const by = Math.floor(a.char / SHEET.perRow) * SHEET.blockH;
+        const sx = bx + a.frame * SHEET.cell;
+        const sy = by + a.dir * SHEET.cell;
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = (breathing ? 0.55 + 0.35 * Math.sin(now / 240 + a.wx) : 1) * selectionAlpha;
+        ctx.drawImage(this.sprite, sx, sy, SHEET.cell, SHEET.cell, footX - w / 2, footY - h, w, h);
+        ctx.globalAlpha = 1;
+      }
+
+      // Static green selection frame stays below the separate yes/no marker.
+      if (matched) {
+        const size = drawPx < 9 || !spriteOk ? Math.max(2, Math.round(drawPx * 0.6)) : w;
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = Math.max(1.5, Math.min(3, size * 0.08));
+        ctx.strokeRect(Math.round(footX - size / 2) - 1, Math.round(footY - size) - 1, size + 2, size + 2);
+      }
+
+      ctx.globalAlpha = selectionAlpha;
+      // verdict marker: a colored dot floating just above the sprite's head
+      if (vScale > 0.01) {
+        const col = a.verdict === "yes" ? COLORS.yes : COLORS.no;
+        const rr = Math.max(2.2, w * 0.22) * clamp01(vScale);
+        const mx = footX, my = footY - h - rr * 0.6;
+        ctx.beginPath(); ctx.fillStyle = withAlpha(col, 0.92 * clamp01(vScale));
+        ctx.arc(mx, my, rr, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = withAlpha("#ffffff", 0.85 * clamp01(vScale)); ctx.lineWidth = Math.max(1, rr * 0.25);
+        ctx.arc(mx, my, rr, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Pick a rotating, spread-apart set of on-screen sprites to show thought bubbles
+  // (only when zoomed in, so the overview stays clean and fast).
+  _updateBubbles(now) {
+    if (!this.zoomedIn) { this.bubbleIdx = []; return; }
+    if (now < this.bubbleT && this.bubbleIdx.length) return;
+    this.bubbleT = now + BUBBLE.cycleMs;
+    const cand = [];
+    for (let i = 0; i < this.agents.length; i++) {
+      const a = this.agents[i];
+      const s = this.worldToScreen(a.wx, a.wy);
+      if (s.x < 60 || s.x > this.cssW - 60 || s.y < 140 || s.y > this.cssH - 80) continue;
+      cand.push({ i, x: s.x, y: s.y });
+    }
+    // shuffle so the selection rotates each cycle, then greedily pick spread-apart ones
+    for (let k = cand.length - 1; k > 0; k--) { const j = (Math.random() * (k + 1)) | 0; [cand[k], cand[j]] = [cand[j], cand[k]]; }
+    const picked = [];
+    for (const c of cand) {
+      if (picked.length >= BUBBLE.maxAtOnce) break;
+      if (picked.every((p) => Math.hypot(p.x - c.x, p.y - c.y) > BUBBLE.sep)) picked.push(c);
+    }
+    this.bubbleIdx = picked.map((p) => p.i);
+    this._requestChatter();   // sparse LLM chatter for the residents now on screen
+  }
+
+  _drawBubbles() {
+    if (!this.bubbleIdx.length) return;
+    const ctx = this.ctx;
+    const showVerdict = this.mode === "reveal" || this.mode === "results";
+    const drawPx = Math.max(3, SPRITE_WORLD * this.cam.zoom);
+    for (const i of this.bubbleIdx) {
+      const a = this.agents[i];
+      if (!a) continue;
+      let text;
+      if (showVerdict && a.verdict) {
+        // ~40% surface a real backend rationale; the rest show a varied stance line
+        const useReal = a.rationale && ((a.seed >>> 0) % 5) < 2;
+        text = useReal ? a.rationale : verdictReaction(a.verdict, a.seed);
+      } else {
+        text = a.thought;
+      }
+      if (!text) continue;
+      const s = this.worldToScreen(a.wx, a.wy);
+      if (this._segmentResult.summary.active && !this._segmentResult.matchMask[a.segmentIndex]) ctx.globalAlpha = 0.25;
+      this._drawBubble(ctx, s.x, s.y - drawPx - 5, text);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // a small Pokémon-style speech box (white fill, black border, downward tail)
+  _drawBubble(ctx, cx, tipY, text) {
+    ctx.font = BUBBLE.font;
+    const pad = 6, lh = 14, tail = 7, radius = 5;
+    // word-wrap to BUBBLE.maxW, max 3 lines
+    const words = String(text).split(/\s+/);
+    const lines = []; let line = "";
+    for (const w of words) {
+      const t = line ? line + " " + w : w;
+      if (ctx.measureText(t).width > BUBBLE.maxW && line) { lines.push(line); line = w; }
+      else line = t;
+      if (lines.length >= 3) break;
+    }
+    if (line && lines.length < 3) lines.push(line);
+    if (!lines.length) return;
+    let bw = 0; for (const l of lines) bw = Math.max(bw, ctx.measureText(l).width);
+    bw = Math.ceil(bw) + pad * 2;
+    const bh = lines.length * lh + pad * 2;
+    let bx = Math.round(cx - bw / 2);
+    bx = Math.max(6, Math.min(this.cssW - bw - 6, bx));
+    const by = Math.round(tipY - tail - bh);
+
+    ctx.save();
+    ctx.lineJoin = "round";
+    // box
+    ctx.beginPath();
+    roundRect(ctx, bx, by, bw, bh, radius);
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#141414"; ctx.stroke();
+    // tail (anchored toward the sprite, clamped within the box width)
+    const tcx = Math.max(bx + 10, Math.min(bx + bw - 10, Math.round(cx)));
+    ctx.beginPath();
+    ctx.moveTo(tcx - 6, by + bh - 1);
+    ctx.lineTo(tcx + 6, by + bh - 1);
+    ctx.lineTo(tcx, by + bh + tail);
+    ctx.closePath();
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.beginPath();            // re-stroke only the two slanted edges so the box base stays open
+    ctx.moveTo(tcx - 6, by + bh - 1); ctx.lineTo(tcx, by + bh + tail); ctx.lineTo(tcx + 6, by + bh - 1);
+    ctx.lineWidth = 2; ctx.strokeStyle = "#141414"; ctx.stroke();
+    // text
+    ctx.fillStyle = "#141414"; ctx.textBaseline = "top";
+    for (let k = 0; k < lines.length; k++) {
+      const tw = ctx.measureText(lines[k]).width;
+      ctx.fillText(lines[k], Math.round(bx + (bw - tw) / 2), by + pad + k * lh);
+    }
+    ctx.restore();
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function withAlpha(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}

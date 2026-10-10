@@ -1,0 +1,55 @@
+/target
+**/*.rs.bk
+.env
+*.env
+state.db
+state.db-*
+*.db-journal
+*.db-wal
+*.db-shm
+/runs
+/data/pums
+/.fly
+fly.toml.bak
+.DS_Store
+
+cache.db
+.claude
+
+# map pipeline: large raw inputs + intermediates (not committed; fetched/derived)
+/data/raw
+/data/*.osm.pbf
+/data/*_dem.tif
+# per-city map build outputs (baked into the deploy image, not git)
+/artifacts
+/mapping.json
+mapping_*.json
+
+# scratch / stray build artifacts (not source)
+/verify_out
+/crates/sim-core/tiles.db
+data/*.aux.xml
+.gstack/
+
+# InsForge & AI agent skills
+.env.local
+.env*.local
+.insforge
+.agent
+.agents
+.augment
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
+.vercel
+
+.env*
+!.env.example
+*.log
+.simtra-run/
+runtime/

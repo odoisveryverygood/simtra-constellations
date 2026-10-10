@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simtra - Simulate anything</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23141414' d='M12 2l1.8 5L19 9l-5.2 2L12 16l-1.8-5L5 9l5.2-2z'/%3E%3C/svg%3E" />
+
+  <!-- fonts: Pixelify Sans (title) · Neue Haas Grotesk Display (body, via Typekit); skipped in ?demo=1 -->
+  <link rel="stylesheet" href="styles.css?v=fix6-5" />
+  <link rel="stylesheet" href="feedpanel.css?v=13" />
+  <script>
+    if (new URLSearchParams(location.search).get("demo") !== "1") {
+      for (const href of ["https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap", "https://use.typekit.net/bsk0vur.css"]) {
+        const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.append(link);
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://sf-digital-twin-tp.fly.dev" />
+</head>
+<body>
+  <!-- the pixel-art city fills the entire page -->
+  <canvas id="map" tabindex="0" aria-label="Map of synthetic residents. Use the demographic evidence controls and resident selector for keyboard access."></canvas>
+  <p id="demo-banner" hidden>Offline demo · Census/PUMS demographics · synthetic residents · fixed fixture outcomes, not answers to new questions. <a href="?">Exit demo</a></p>
+
+  <div id="ui">
+    <div class="map-atmosphere" aria-hidden="true">
+      <div class="map-grid"></div>
+      <div class="map-coordinates map-coordinates--west">37° 46′ N</div>
+      <div class="map-coordinates map-coordinates--east">SIMULATED CIVIC FIELD</div>
+    </div>
+
+    <!-- top-left: the title IS the city switcher — a glass column of city titles -->
+    <div id="title-select" class="title-select">
+      <button id="title-btn" class="title title-btn" type="button"
+              aria-haspopup="listbox" aria-expanded="false" aria-label="Switch city">
+        <span class="title-lockup">
+          <span class="title-kicker">synthetic city / 01</span>
+          <span id="title-current" class="title-current">San Francisco</span>
+        </span>
+        <svg class="title-caret" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+          <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                stroke-linejoin="round" d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      <div id="title-menu" class="title-menu hidden" role="listbox" aria-label="Cities"></div>
+    </div>
+
+    <!-- simulation status: city · residents · knowledge-clock (top-right) -->
+    <div id="status" class="status">waking the city…</div>
+
+    <!-- legacy news bubble: kept in the DOM, superseded by the feed panel below -->
+    <div id="news-bubble" class="news-bubble hidden" aria-live="polite"></div>
+
+    <!-- the city feed: events, how residents took them, and what was asked -->
+    <section id="feed-panel" class="feed-panel hidden" aria-label="City feed"></section>
+
+    <!-- boot progress: a thin line that fills while the city wakes -->
+    <div id="boot" class="boot hidden" aria-hidden="true">
+      <div class="boot-track"><div id="boot-fill" class="boot-fill"></div></div>
+    </div>
+
+    <!-- return-to-overview button (visible only when zoomed in) -->
+    <button id="return" class="return hidden" aria-label="Return to the whole city">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+              d="M15 5l-7 7 7 7" />
+      </svg>
+      <span>whole city</span>
+    </button>
+
+    <!-- bottom-center dock: query progress · result card · composer row (ask + info) -->
+    <div id="dock" class="dock">
+      <!-- query summary + response progress (loading state, bottom-center) -->
+      <div id="summary" class="summary hidden" aria-live="polite">
+        <div id="summary-label" class="summary-label">PREDICTING</div>
+        <div id="summary-audience" class="summary-audience"></div>
+        <div id="summary-text" class="summary-text"></div>
+        <div id="progress" class="progress">
+          <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+          <div id="progress-label" class="progress-label"></div>
+        </div>
+      </div>
+
+      <div id="result-card" class="result-card hidden" role="dialog" aria-modal="false" aria-label="Prediction result"></div>
+
+      <!-- audience confirmation after filters are applied: a plain card, not a warning -->
+      <div id="audience-card" class="audience-card hidden" role="status" aria-live="polite">
+        <div class="audience-card-kicker">Audience</div>
+        <div id="audience-card-title" class="audience-card-title"></div>
+        <div id="audience-card-meta" class="audience-card-meta"></div>
+        <button id="audience-card-done" class="btn btn-primary" type="button">Done</button>
+      </div>
+
+      <div class="dock-row">
+        <div id="ask" class="ask" data-state="idle" data-mode="predict" tabindex="0" role="group" aria-label="Ask a prediction question">
+          <!-- row 1: who gets asked; row 2: the question and send -->
+          <div class="ask-head">
+            <button id="audience-chip" class="audience-chip" type="button" aria-pressed="false"
+                    title="Filter residents" aria-label="Filter residents">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 5h16l-6.4 7.2v5.1L10 19v-6.8z" />
+              </svg>
+              <span class="audience-chip-kicker">Asking</span>
+              <span id="audience-chip-text">everyone</span>
+              <span id="audience-chip-count" class="audience-chip-count hidden"></span>
+              <svg class="audience-chip-caret" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="ask-main">
+            <svg class="ask-search" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2" />
+              <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15 15l4.5 4.5" />
+            </svg>
+            <span id="ask-label" class="ask-label">ask</span>
+            <textarea id="ask-input" class="ask-input" rows="1" autocomplete="off" spellcheck="false"
+                      placeholder="predict anything — e.g. will a Democrat win the 2026 California governor race?"
+                      aria-label="Predict anything"></textarea>
+            <button id="ask-submit" class="ask-send" type="button" aria-label="Send" title="Send the question (Enter)">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      d="M21 3 10.5 13.5M21 3l-7 18-3.5-7.5L3 10z" />
+              </svg>
+            </button>
+          </div>
+          <!-- question type + the extra fields each type needs; shown while composing -->
+          <div class="ask-extra">
+            <div class="ask-modes" role="radiogroup" aria-label="Question type">
+              <button type="button" class="ask-mode" role="radio" data-mode="predict" aria-checked="true" title="Ask one question">Predict</button>
+              <button type="button" class="ask-mode" role="radio" data-mode="ab" aria-checked="false" title="Compare two messages with the same audience">A/B</button>
+            </div>
+            <div id="ab-fields" class="ask-fields" hidden>
+              <textarea id="ab-a" class="ask-field" rows="2" maxlength="4000" placeholder="Variant A" aria-label="Variant A"></textarea>
+              <textarea id="ab-b" class="ask-field" rows="2" maxlength="4000" placeholder="Variant B" aria-label="Variant B"></textarea>
+            </div>
+            <div id="marketing-fields" class="ask-fields" hidden>
+              <textarea id="marketing-copy" class="ask-field" rows="3" maxlength="4000"
+                        placeholder="Paste the exact post you plan to publish; every resident will see it"
+                        aria-label="Planned post copy"></textarea>
+            </div>
+            <div id="ask-error" class="ask-error" role="alert" tabindex="-1"></div>
+          </div>
+        </div>
+        <div class="dock-tools dock-tools--balance">
+          <button id="info-btn" class="info-btn" aria-label="User manual" title="User manual">?</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- population filters: every selected trait is combined before sampling -->
+    <div id="filter-scrim" class="about-scrim hidden"></div>
+    <div id="filter-modal" class="about filter-modal hidden" role="dialog" aria-modal="true"
+         aria-labelledby="filter-title" aria-describedby="filter-note">
+      <button id="filter-close" class="about-close" type="button" aria-label="Close resident filters">×</button>
+      <div id="filter-title" class="about-title">filter residents</div>
+      <p id="filter-note" class="about-sub filter-note">Build a new synthetic sample using Census records that match every selected trait.</p>
+      <form id="filter-form" class="filter-form">
+        <div class="filter-field">
+          <label for="filter-age">Exact age</label>
+          <input id="filter-age" type="number" min="0" max="99" inputmode="numeric" placeholder="Any age">
+        </div>
+        <div class="filter-field">
+          <label for="filter-puma">Lives in</label>
+          <select id="filter-puma">
+            <option value="">Anywhere in this city</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="filter-occupation">Occupation</label>
+          <select id="filter-occupation">
+            <option value="">Any occupation</option>
+            <option value="management_business">Management / business</option>
+            <option value="software_tech">Software / tech</option>
+            <option value="engineer">Engineer</option>
+            <option value="science_analysis">Science / analysis</option>
+            <option value="social_services">Social services</option>
+            <option value="legal">Legal</option>
+            <option value="education">Education</option>
+            <option value="arts_media">Arts / design / media</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="service">Service work</option>
+            <option value="sales_office">Sales / office</option>
+            <option value="construction_trades">Construction / trades</option>
+            <option value="production_transportation">Production / transportation</option>
+            <option value="military">Military</option>
+            <option value="unemployed">Currently unemployed</option>
+            <option value="not_in_workforce">Not in the workforce</option>
+            <option value="other">Other work</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="filter-education">Education</label>
+          <select id="filter-education">
+            <option value="">Any education</option>
+            <option value="lt_hs">No high-school diploma</option>
+            <option value="hs">High-school diploma</option>
+            <option value="some_college">Some college / associate degree</option>
+            <option value="bachelors">Bachelor's degree</option>
+            <option value="graduate">Graduate degree</option>
+          </select>
+        </div>
+        <div id="filter-error" class="ab-error filter-error" role="alert" tabindex="-1"></div>
+        <div class="res-actions filter-actions">
+          <button id="filter-apply" class="btn btn-primary" type="submit">Apply filters</button>
+          <button id="filter-clear" class="btn" type="button">Clear filters</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- about card (opened by the ? button) -->
+    <div id="about-scrim" class="about-scrim hidden"></div>
+    <div id="about" class="about hidden" role="dialog" aria-modal="true" aria-label="Simtra user manual">
+      <button id="about-close" class="about-close" aria-label="Close">×</button>
+      <div class="about-title">Simtra</div>
+      <div class="about-sub">Know the impact of a million-dollar decision in twenty minutes instead of four months.</div>
+      <p class="about-intro">A live simulation of San Francisco: 10,000 digital residents built from real US Census data, each with a background, motivation, memory and daily life.</p>
+
+      <section class="manual-step">
+        <div class="manual-kicker"><span class="manual-n">1</span><span class="manual-name">Simulate</span></div>
+        <h3 class="manual-title">Ask the city anything.</h3>
+        <ul class="about-list">
+          <li>Type a question in the box at the bottom, e.g. <b>What if I increase the price of Chipotle bowls by 20%?</b></li>
+          <li>Residents answer individually; you get the split (keep buying · buy less · switch · stop) and the reasons.</li>
+          <li><b>A/B</b>: compare two messages with the same audience.</li>
+        </ul>
+      </section>
+
+      <section class="manual-step">
+        <div class="manual-kicker"><span class="manual-n">2</span><span class="manual-name">Filter</span></div>
+        <h3 class="manual-title">Ask exactly who matters.</h3>
+        <ul class="about-list">
+          <li>Tap the audience pill: age, neighborhood, occupation, education, e.g. <b>25-year-old software engineers</b>.</li>
+          <li>The result shows who was asked and how many Census records back it.</li>
+        </ul>
+      </section>
+
+      <section class="manual-step">
+        <div class="manual-kicker"><span class="manual-n">3</span><span class="manual-name">Understand</span></div>
+        <h3 class="manual-title">See the people behind every number.</h3>
+        <ul class="about-list">
+          <li>Under each result: bar, histogram, scatter, box or line by demographic.</li>
+          <li>Hover a bar to see the residents; click it to read each person’s own answer and why; click a person for their full profile.</li>
+        </ul>
+      </section>
+
+      <section class="manual-step">
+        <div class="manual-kicker"><span class="manual-n">4</span><span class="manual-name">Remember</span></div>
+        <h3 class="manual-title">The city evolves as you use it.</h3>
+        <ul class="about-list">
+          <li>Post news or events in the Timeline (<b>A 5.9 earthquake hit the Bay Area</b>); residents react in character.</li>
+          <li>Every event and survey is remembered and shapes the next answer. Ask the same question again and the timeline shows the shift.</li>
+          <li>Everything you post and ask lives in the Timeline; verified Census questions (<b>show the age distribution</b>) work too.</li>
+        </ul>
+      </section>
+
+      <div class="about-h">Track record</div>
+      <p class="about-track"><b>2024 presidency:</b> 83.8% actual vs 81.3% predicted. <b>March 2024 Prop A:</b> 70.4% vs 70%.
+        Backtested with a model whose knowledge cutoff predates both events, so nothing was memorized.</p>
+
+      <div class="about-credit">
+        Built by <b>Nandan Pericherla</b>, <b>Abhay Sudhir</b>, and <b>Mahin Bharathwaj</b>.
+        <button id="about-tips" class="about-tips" type="button">Show tips again</button>
+      </div>
+    </div>
+
+    <!-- character inspector (tap a character when zoomed in) -->
+    <div id="char-card" class="char-card hidden" role="dialog" aria-label="Resident details"></div>
+
+    <!-- persona modal: one resident behind a chart statistic -->
+    <div id="persona-scrim" class="about-scrim hidden"></div>
+    <div id="persona-modal" class="about persona-modal hidden" role="dialog" aria-modal="true" aria-label="Resident persona">
+      <button id="persona-close" class="about-close" aria-label="Close">×</button>
+      <div id="persona-body"></div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="alert" aria-live="assertive"></div>
+  </div>
+
+  <script src="backend-config.js?v=1"></script>
+  <script type="module" src="src/app.js?v=fix6-9-motion"></script>
+</body>
+</html>
