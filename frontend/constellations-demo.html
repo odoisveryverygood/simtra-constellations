@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Constellations · standalone harness (mock data)</title>
+  <link rel="stylesheet" href="constellations.css" data-constellations />
+  <style>
+    /* Harness chrome only — none of this ships with the renderer. */
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0f1f; }
+    body { font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #f2f5fb; }
+    #harness {
+      position: fixed; top: 12px; left: 12px; z-index: 50;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      padding: 10px 12px; border-radius: 14px;
+      background: rgba(6, 10, 22, .88); border: 1px solid rgba(226, 232, 245, .18);
+    }
+    #harness strong { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #c98500; }
+    #harness button {
+      border: 1px solid rgba(226, 232, 245, .24); border-radius: 999px;
+      background: rgba(226, 232, 245, .08); color: #f2f5fb;
+      padding: 5px 11px; font: inherit; cursor: pointer;
+    }
+    #harness button:hover { background: rgba(226, 232, 245, .18); }
+    #harness button:focus-visible { outline: 2px solid #9ec5f4; outline-offset: 2px; }
+    /* on a phone the toolbar stays one scrollable row, clear of the view's header */
+    @media (max-width: 560px) {
+      #harness { top: 8px; left: 8px; right: 8px; flex-wrap: nowrap; overflow-x: auto; padding: 7px 9px; font-size: 11px; }
+      #harness button { white-space: nowrap; padding: 4px 9px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Development harness for the constellation renderer. Every model it feeds
+       the view is MOCK DATA: no backend, no model call, no real prediction. The
+       integrated app supplies the real model through setResult(). -->
+  <div id="harness">
+    <strong>mock data</strong>
+    <button id="toggle" type="button">toggle view</button>
+    <button id="groups-2" type="button">2 groups</button>
+    <button id="groups-5" type="button">5 groups</button>
+    <button id="groups-9" type="button">9 groups (past the colour slots)</button>
+    <button id="clear" type="button">clear result</button>
+    <button id="destroy" type="button">destroy</button>
+  </div>
+
+  <script type="module">
+    import { initConstellations, createMockModel } from "./src/constellations.js";
+
+    // A ninth group has no colour slot by design — it renders neutral and
+    // relies on its direct label. This builds one so that path is visible here.
+    function manyGroups(n) {
+      const base = createMockModel({ groups: 5, question: "Nine-group stress fixture (mock question)" });
+      const extra = [];
+      for (let i = base.groups.length; i < n; i++) {
+        extra.push({
+          id: `mock-extra-${i}`, label: `Other grouping ${i - 4} (mock)`,
+          share: 0.02, member_count: 200,
+          members: Array.from({ length: 12 }, (_, k) => ({ id: 90000 + i * 100 + k, name: `Resident ${i}-${k}`, age: 30 + k, synthetic: true })),
+        });
+      }
+      return { ...base, groups: [...base.groups, ...extra] };
+    }
+
+    // The harness passes a stub for `map`: the renderer only ever reads
+    // reducedMotion / charOf / drawCharTo off it, so it stands alone here.
+    // The stub tracks the motion preference the way app.js does, so this page
+    // behaves like the integrated view rather than pinning motion on.
+    const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
+    const mapStub = { reducedMotion: motionPreference.matches };
+    motionPreference.addEventListener("change", (e) => { mapStub.reducedMotion = e.matches; });
+    const stateStub = { city: { display: "San Francisco (mock)" }, residents: 10000 };
+    let view = initConstellations(mapStub, stateStub);
+    let active = false;
+
+    const apply = (model) => { view.setResult(model); if (!active) toggle(); };
+    const toggle = () => { active = !active; view.setActive(active); };
+
+    document.getElementById("toggle").addEventListener("click", toggle);
+    document.getElementById("groups-2").addEventListener("click", () => apply(createMockModel({ groups: 2 })));
+    document.getElementById("groups-5").addEventListener("click", () => apply(createMockModel({ groups: 5 })));
+    document.getElementById("groups-9").addEventListener("click", () => apply(manyGroups(9)));
+    document.getElementById("clear").addEventListener("click", () => view.setResult(null));
+    document.getElementById("destroy").addEventListener("click", () => { view.destroy(); active = false; });
+
+    apply(createMockModel({ groups: 5 }));
+    // exposed for the browser test
+    globalThis.__cst = { view, createMockModel, manyGroups, isActive: () => active };
+  </script>
+</body>
+</html>

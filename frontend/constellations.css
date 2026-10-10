@@ -1,0 +1,244 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Constellations — the optional starfield view.
+
+   Everything here is namespaced `.cst-*` and scoped under `.cst-root`, so this
+   sheet can load next to styles.css without touching the city chrome. The
+   palette is the night-sky one the view was validated against (surface
+   #0a0f1f); type and spacing follow the scales in styles.css where they exist
+   and fall back to literal values when this sheet is loaded on its own.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.cst-root {
+  position: fixed;
+  inset: 0;
+  z-index: 3;                 /* over the city canvas, under the app's chrome */
+  color-scheme: dark;
+  color: #f2f5fb;
+  font-family: var(--font, "neue-haas-grotesk-display", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif);
+  pointer-events: none;       /* only the sky and the card take input */
+}
+.cst-root[hidden] { display: none; }
+
+/* ── the sky ── */
+.cst-sky {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #0a0f1f;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: none;
+}
+.cst-sky:focus-visible { outline: 2px solid #9ec5f4; outline-offset: -4px; }
+
+/* ── header: the question this sky answers ── */
+.cst-header {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  text-align: center;
+}
+.cst-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #aeb8cd;
+}
+.cst-badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.cst-badge--mock { background: #c98500; color: #10131c; }
+.cst-badge[hidden] { display: none; }
+.cst-question {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  color: #f2f5fb;
+  text-wrap: balance;
+}
+.cst-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #aeb8cd;
+}
+
+/* ── legend: always present, so identity is never colour alone ── */
+.cst-legend {
+  position: absolute;
+  left: 50%;
+  bottom: 118px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  width: min(760px, calc(100vw - 24px));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cst-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(6, 10, 22, .72);
+  font-size: 12px;
+  line-height: 1;
+}
+.cst-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.cst-legend-label { font-weight: 500; color: #f2f5fb; }
+.cst-legend-share { font-weight: 600; color: #aeb8cd; font-variant-numeric: tabular-nums lining-nums; }
+
+/* ── the standing disclaimer ── */
+.cst-note {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 24px));
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #aeb8cd;
+}
+
+/* ── the resident card ── */
+.cst-card {
+  position: absolute;
+  left: 20px;                 /* the renderer flips this to `right` when the
+                                 selected star sits on this side */
+  bottom: 148px;
+  width: min(320px, calc(100vw - 40px));
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(10, 15, 31, .94);
+  border: 1px solid rgba(226, 232, 245, .16);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+  pointer-events: auto;
+}
+.cst-card[hidden] { display: none; }
+.cst-card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(226, 232, 245, .12);
+  color: #f2f5fb;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cst-card-close:hover { background: rgba(226, 232, 245, .2); }
+.cst-card-close:focus-visible { outline: 2px solid #9ec5f4; outline-offset: 2px; }
+.cst-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 28px;
+}
+.cst-card-portrait {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 10px;
+  background: rgba(226, 232, 245, .1);
+  image-rendering: pixelated;
+}
+.cst-card-portrait--empty { opacity: .45; }
+.cst-card-id { min-width: 0; }
+.cst-card-name { font-size: 16px; font-weight: 600; line-height: 1.25; }
+.cst-card-sub { font-size: 13px; line-height: 1.3; color: #aeb8cd; }
+.cst-card-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #f2f5fb;
+}
+.cst-card-why {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #e2e8f5;
+}
+.cst-card-disclaimer {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 232, 245, .14);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #aeb8cd;
+}
+
+/* the table view: present for assistive tech, out of the visual layout */
+.cst-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── mobile ── the view keeps the same parts, stacked tighter ── */
+@media (max-width: 560px) {
+  .cst-header { top: 112px; width: calc(100vw - 24px); }
+  .cst-question { font-size: 17px; }
+  .cst-meta { font-size: 11px; }
+  .cst-legend { bottom: 136px; gap: 5px 8px; width: calc(100vw - 16px); }
+  .cst-legend-item { padding: 4px 8px; font-size: 11px; }
+  .cst-note { bottom: 96px; width: calc(100vw - 16px); font-size: 10px; }
+  /* on a phone the card spans the width, so the renderer's side flip is moot */
+  .cst-card { left: 8px !important; right: 8px !important; bottom: 168px; width: auto; }
+}
+
+/* short viewports (landscape phones): the chrome gets out of the sky's way */
+@media (max-height: 520px) {
+  .cst-header { top: 64px; }
+  .cst-legend { bottom: 86px; }
+  .cst-note { bottom: 60px; }
+  .cst-card { bottom: 110px; }
+}
+
+/* Twinkle lives in the canvas loop, which stops under this query; these rules
+   cover the chrome so nothing animates here either. */
+@media (prefers-reduced-motion: reduce) {
+  .cst-root *, .cst-root { animation: none !important; transition: none !important; }
+}
+
+@media (forced-colors: active) {
+  .cst-root { color: CanvasText; }
+  .cst-legend-item, .cst-card { background: Canvas; border: 1px solid CanvasText; }
+  .cst-legend-label, .cst-legend-share, .cst-card-sub, .cst-note, .cst-meta, .cst-card-disclaimer { color: CanvasText; }
+  .cst-swatch { border: 1px solid CanvasText; }
+}
