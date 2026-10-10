@@ -8,4 +8,4 @@ The renderer draws at most 240 highlights on desktop / 110 on mobile and 60 shor
 
 Integration PR #5 depends on teammate PRs #4 and #6. Test all three together before merging. No new provider, backend, or paid per-resident calls are added.
 
-Validation: 103 frontend tests pass in the combined local branch, including 10,000-resident drawing bounds, lifecycle reset, and deterministic selection. Live Jev A/B verification remains a separate pending check recorded by teammate B.
+Validation: 108 frontend and audience tests pass in the combined local branch, including 10,000-resident drawing bounds, lifecycle reset, and deterministic selection. Live Jev A/B verification passed through the integrated browser UI on October 10, 2026: returned model `jev-latest`, 10,000 residents, 33 archetypes, 3 model calls, and weighted shares summing to 1. City connections appeared and retained all 10,000 residents.

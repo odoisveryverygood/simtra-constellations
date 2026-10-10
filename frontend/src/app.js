@@ -2001,7 +2001,7 @@ function showAbResults(result) {
   const bPct = pct(result.b_share);
   const margin = Number(result.margin_pp || 0);
   const winner = result.winner === "a" ? "Variant A leads" : result.winner === "b" ? "Variant B leads" : "Near tie";
-  const marginText = `${margin > 0 ? "+" : ""}${margin.toFixed(1)} pp for ${margin >= 0 ? "A" : "B"}`;
+  const marginText = `${Math.abs(margin).toFixed(1)} pp lead for ${margin >= 0 ? "A" : "B"}`;
   const breakdowns = normalizeBreakdowns(result.breakdowns);
   const segments = abSegments(breakdowns, result.a_share || 0, abCellLabel);
   const aCi = result.a_ci || [result.a_share, result.a_share];

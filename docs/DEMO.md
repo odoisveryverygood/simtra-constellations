@@ -11,4 +11,4 @@ Open the live city with `?backend=local&port=8088&motion=on`. Confirm the actual
 
 Keep the pitch focused: Simtra turns a question into a visible picture of how a synthetic community may respond. The theme lives in the result reveal.
 
-Do not promise real opinions, accuracy against an election, configured persona memory, or successful live Jev A/B until those are independently verified.
+Do not promise real opinions, accuracy against an election, configured persona memory, or real-world prediction accuracy. Live Jev A/B was verified on the local backend on October 10, 2026; remote installations still need their own private provider configuration.
