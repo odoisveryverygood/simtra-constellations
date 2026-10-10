@@ -34,10 +34,14 @@
     .simtra-constellations-active #return {display:none!important;}
     .simtra-constellations-active .result-card {visibility:hidden;pointer-events:none!important;}
     .simtra-constellations-active .cst-header {top:158px;}
-    .simtra-constellations-active .cst-legend {bottom:230px;}
-    .simtra-constellations-active .cst-note {bottom:178px;}
+    .simtra-constellations-active .cst-legend {bottom:260px;}
+    .simtra-constellations-active .cst-note {bottom:200px;}
     .simtra-constellations-active .cst-card {bottom:220px;z-index:5;}
 
+    .offline-demo .view-switch, .offline-demo .view-notice {margin-top:46px;}
+    .offline-demo .feed-panel {top:190px!important;}
+    .offline-demo.simtra-constellations-active .cst-header {top:204px;}
+    @media(max-width:699px){.offline-demo .view-switch,.offline-demo .view-notice{margin-top:66px;}.offline-demo .feed-panel{top:228px!important;}.offline-demo.simtra-constellations-active .cst-header{top:232px;}}
     @media(max-width:699px){.simtra-constellations-active .cst-header {top:166px;}.simtra-constellations-active .cst-note{font-size:10px;}}
     @media(max-width:699px){.view-switch{top:110px;left:12px;right:auto;}.view-switch button{padding:8px 13px;}.view-notice{top:162px;left:12px;right:auto;}.view-caption{top:185px;font-size:18px;}body:has(.view-switch) .feed-panel{top:162px!important;}}
   </style>
@@ -308,6 +312,6 @@
   </div>
 
   <script src="backend-config.js?v=1"></script>
-  <script type="module" src="src/app.js?v=constellation-integration-4"></script>
+  <script type="module" src="src/app.js?v=constellation-integration-5"></script>
 </body>
 </html>
