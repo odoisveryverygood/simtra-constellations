@@ -39,3 +39,11 @@ test('loading city refuses constellation activation without fetching modules',as
   const f=fixture({loadRenderer:()=>{throw Error('must not load');}});f.state.phase='booting';
   assert.equal(await f.bridge.setActive(true),false);assert.equal(f.calls.length,0);
 });
+test('structured fixture provenance becomes the renderer mock badge without mutating the model',async()=>{
+  const model={question:'Q',groups:[],provenance:{mode:'fixture',label:'Mock data — saved fixture'}};
+  const f=fixture({loadModel:async()=>({buildConstellationModel:()=>model})});
+  f.bridge.setResult({p_yes:.6});await f.bridge.setActive(true);
+  const shown=f.calls.find(c=>c[0]==='result')[1];
+  assert.equal(shown.mock,true);assert.equal(shown.provenance,'Mock data — saved fixture');
+  assert.equal(model.provenance.mode,'fixture');assert.equal(model.mock,undefined);
+});

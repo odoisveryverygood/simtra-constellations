@@ -19,7 +19,12 @@ export function createConstellationBridge({ map, state, loadRenderer, loadModel,
   }
   function syncResult() {
     if (!renderer) return;
-    renderer.setResult(result ? buildModel(state.rawResidents, result) : null);
+    const model = result ? buildModel(state.rawResidents, result) : null;
+    // B returns structured provenance; A accepts a display string and mock flag.
+    const displayModel = model && typeof model.provenance === 'object' && model.provenance
+      ? { ...model, mock: model.mock === true || model.provenance.mode === 'fixture', provenance: model.provenance.label || null }
+      : model;
+    renderer.setResult(displayModel);
   }
   function restore() {
     try { renderer?.setActive(false); } catch { /* city restoration is unconditional */ }
