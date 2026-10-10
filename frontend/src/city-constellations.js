@@ -61,8 +61,8 @@ export function initConstellations(map) {
   }
   map.drawConstellations = draw;
   return {
-    setActive(value) { active = Boolean(value && model); cached = null; },
-    setResult(value) { model = normalizeModel(value); cached = null; if (!model) active = false; },
-    destroy() { active = false; model = null; if (map.drawConstellations === draw) map.drawConstellations = previous; },
+    setActive(value) { active = Boolean(value && model); map.constellationActive = active; cached = null; },
+    setResult(value) { model = normalizeModel(value); cached = null; if (!model) { active = false; map.constellationActive = false; } },
+    destroy() { active = false; map.constellationActive = false; model = null; if (map.drawConstellations === draw) map.drawConstellations = previous; },
   };
 }
