@@ -18,32 +18,15 @@
   </script>
   <link rel="preconnect" href="https://sf-digital-twin-tp.fly.dev" />
   <style>
-    .view-switch {position:absolute;top:92px;right:20px;display:flex;gap:3px;padding:4px;border:1px solid #e0e4eb;border-radius:24px;background:#ffffffed;box-shadow:0 3px 15px #10182812;z-index:25;}
-    .feed-panel {top:144px!important;}
-    .view-switch button {border:0;border-radius:20px;padding:9px 15px;background:transparent;color:#657083;font:600 13px system-ui;cursor:pointer;}
+    .view-switch {position:absolute;top:94px;right:20px;z-index:25;}
+    .view-switch button {border:1px solid #d6dde7;border-radius:20px;padding:9px 14px;background:#ffffffed;color:#344054;font:600 12px system-ui;cursor:pointer;}
     .view-switch button[aria-pressed="true"] {background:#182238;color:white;}
     .view-switch button:focus-visible {outline:3px solid #4988ef;outline-offset:2px;}
-    .view-switch button:disabled {cursor:wait;opacity:.6;}
-    .view-notice {position:absolute;top:144px;right:20px;width:min(320px,calc(100vw - 40px));padding:14px 18px;margin:0;border:1px solid #e0e4eb;border-radius:16px;background:#fff;color:#344054;font:13px/1.5 system-ui;z-index:25;box-shadow:0 3px 15px #10182812;}
-    .view-caption {position:absolute;top:145px;left:50%;transform:translateX(-50%);text-align:center;color:#edf2ff;font:500 22px/1.5 system-ui;pointer-events:none!important;width:min(540px,85vw);}
-    .view-caption span {font-size:11px;color:#bac7df;}
-    .simtra-constellations-active #ui {z-index:4;}
-    .simtra-constellations-active .map-atmosphere,
-    .simtra-constellations-active #view-caption,
-    .simtra-constellations-active .feed-panel,
-    .simtra-constellations-active #return {display:none!important;}
-    .simtra-constellations-active .result-card {visibility:hidden;pointer-events:none!important;}
-    .simtra-constellations-active .cst-header {top:158px;}
-    .simtra-constellations-active .cst-legend {bottom:calc(var(--constellation-dock-clearance, 200px) + 75px);}
-    .simtra-constellations-active .cst-note {bottom:var(--constellation-dock-clearance, 200px);}
-    .simtra-constellations-active .cst-card {bottom:calc(var(--constellation-dock-clearance, 200px) + 95px);z-index:5;}
-
-    .offline-demo .view-switch, .offline-demo .view-notice {margin-top:46px;}
-    .offline-demo .feed-panel {top:190px!important;}
-    .offline-demo.simtra-constellations-active .cst-header {top:204px;}
-    @media(max-width:699px){.offline-demo .view-switch,.offline-demo .view-notice{margin-top:66px;}.offline-demo .feed-panel{top:228px!important;}.offline-demo.simtra-constellations-active .cst-header{top:232px;}}
-    @media(max-width:699px){.simtra-constellations-active .cst-header {top:166px;}.simtra-constellations-active .cst-note{font-size:10px;}}
-    @media(max-width:699px){.view-switch{top:110px;left:12px;right:auto;}.view-switch button{padding:8px 13px;}.view-notice{top:162px;left:12px;right:auto;}.view-caption{top:185px;font-size:18px;}body:has(.view-switch) .feed-panel{top:162px!important;}}
+    .view-notice {position:absolute;top:135px;right:20px;max-width:245px;margin:0;padding:8px 12px;border-radius:12px;background:#ffffffed;color:#344054;font:11px/1.5 system-ui;z-index:25;}
+    .simtra-constellations-active .result-card {max-height:38vh;width:min(480px,88vw);}
+    .simtra-constellations-active .feed-panel {display:none!important;}
+    .offline-demo .view-switch,.offline-demo .view-notice {margin-top:46px;}
+    @media(max-width:699px){.view-switch{top:112px;right:12px;}.view-notice{top:152px;right:12px;max-width:210px;}.offline-demo .view-switch,.offline-demo .view-notice{margin-top:66px;}}
   </style>
 </head>
 <body>
@@ -52,12 +35,10 @@
   <p id="demo-banner" hidden>Offline demo · Census/PUMS demographics · synthetic residents · fixed fixture outcomes, not answers to new questions. <a href="?">Exit demo</a></p>
 
   <div id="ui">
-    <div class="view-switch" role="group" aria-label="Explore the city or constellations">
-      <button id="view-city" type="button" aria-pressed="true">City</button>
-      <button id="view-constellations" type="button" aria-pressed="false">✦ Constellations</button>
+    <div class="view-switch" role="group" aria-label="Result connections">
+      <button id="view-constellations" type="button" aria-pressed="false" hidden>✦ Show connections</button>
     </div>
     <p id="view-notice" class="view-notice" role="status" aria-live="polite" hidden></p>
-    <p id="view-caption" class="view-caption" hidden>Shared perspectives, connected.<br><span>Synthetic residents · illustrative links and individual response placement</span></p>
     <div class="map-atmosphere" aria-hidden="true">
       <div class="map-grid"></div>
       <div class="map-coordinates map-coordinates--west">37° 46′ N</div>
@@ -312,6 +293,6 @@
   </div>
 
   <script src="backend-config.js?v=1"></script>
-  <script type="module" src="src/app.js?v=constellation-integration-6"></script>
+  <script type="module" src="src/app.js?v=city-connections-1"></script>
 </body>
 </html>

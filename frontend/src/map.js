@@ -730,6 +730,7 @@ export class SFMap {
     }
 
     this._drawSprites(now, dt);
+    this.drawConstellations?.(ctx, now);
     if (!this.reducedMotion) this._updateBubbles(now);
     this._drawBubbles();
 

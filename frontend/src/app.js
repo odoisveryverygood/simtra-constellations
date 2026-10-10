@@ -1,4 +1,4 @@
-import { createConstellationBridge } from "./constellation-bridge.js?v=2";
+import { createConstellationBridge } from "./constellation-bridge.js?v=3";
 // ─────────────────────────────────────────────────────────────────────────
 // sim francisco · pixel-map frontend · orchestration
 //
@@ -11,7 +11,7 @@ import { createConstellationBridge } from "./constellation-bridge.js?v=2";
 // ─────────────────────────────────────────────────────────────────────────
 
 import { SIM, PREDICT, TIMING, MAP } from "./config.js";
-import { SFMap } from "./map.js";
+import { SFMap } from "./map.js?v=city-links-1";
 import { assignVerdicts } from "./verdict.js";
 import {
   AB_CROSS_KEY_SEP, AB_MIN_SEGMENT_N, abCrossMatrix, abLeanAlpha, abSegments,
@@ -109,47 +109,24 @@ export const state = {
   newsExpanded: false,   // whether the news bubble is showing all of them
 };
 
-// City remains the default. Optional teammate modules load only on demand.
-const viewCity = $("view-city"), viewConstellations = $("view-constellations");
-const viewNotice = $("view-notice"), viewCaption = $("view-caption");
-let lastViewMessage = "";
-function syncConstellationInsets() {
-  const top = els.ask.getBoundingClientRect().top;
-  document.documentElement.style.setProperty("--constellation-dock-clearance", `${Math.max(160, innerHeight - top + 12)}px`);
-}
-const constellationDockObserver = new ResizeObserver(syncConstellationInsets);
-constellationDockObserver.observe(els.ask);
-window.addEventListener("resize", syncConstellationInsets);
-
+// Constellations are a result layer on the existing city, not another view.
+const viewConstellations = $("view-constellations"), viewNotice = $("view-notice");
 export const constellations = createConstellationBridge({
   map, state,
-  loadRenderer: async () => {
-    const module = await import("./constellations.js");
-    if (!$("constellation-styles")) {
-      const link = document.createElement("link");
-      link.id = "constellation-styles"; link.rel = "stylesheet"; link.href = "constellations.css";
-      document.head.append(link);
-    }
-    return module;
-  },
+  loadRenderer: () => import("./city-constellations.js?v=1"),
   loadModel: () => import("./constellation-model.js"),
   onChange: ({ active, busy, message }) => {
     document.body.classList.toggle("simtra-constellations-active", active);
-    els.canvas.style.visibility = active ? "hidden" : "";
-    els.canvas.setAttribute("aria-hidden", String(active));
-    els.canvas.tabIndex = active ? -1 : 0;
-    viewCity.setAttribute("aria-pressed", String(!active));
+    viewConstellations.hidden = !state.lastResult || !active && state.phase !== "results";
     viewConstellations.setAttribute("aria-pressed", String(active));
     viewConstellations.disabled = busy;
-    viewConstellations.textContent = busy ? "Connecting…" : "✦ Constellations";
-    viewCaption.hidden = !active;
-    if (active) syncConstellationInsets();
-    if (message) { viewNotice.textContent = message; viewNotice.hidden = false; lastViewMessage = message; }
-    else if (active || busy || !lastViewMessage) { viewNotice.hidden = true; }
+    viewConstellations.textContent = busy ? "Connecting…" : active ? "✦ Hide connections" : "✦ Show connections";
+    viewNotice.textContent = message || (active
+      ? `${state.rawResidents.length.toLocaleString()} synthetic residents${api.isDemo ? " · offline fixture" : ""} · illustrative connections` : "");
+    viewNotice.hidden = !viewNotice.textContent;
   },
 });
-viewCity.addEventListener("click", () => { lastViewMessage = ""; constellations.setActive(false); });
-viewConstellations.addEventListener("click", () => constellations.setActive(true));
+viewConstellations.addEventListener("click", () => constellations.setActive(viewConstellations.getAttribute("aria-pressed") !== "true"));
 window.addEventListener("pagehide", () => constellations.destroy());
 
 // fallback city when /cities is unavailable — keeps the single-city SF behavior.
@@ -529,6 +506,7 @@ function openPastResult(item) {
     sample_rationales: [], hydra: null, audience: currentAudience(),
     past: { test_id: item.id, created_at: item.created_at, events_known: item.events_known, population_key: item.population_key, kind: item.kind, under_event: item.under_event },
   };
+  constellations.reset();
   map.clearVerdicts();
   state.lastResult = result;
   constellations.setResult(result);
@@ -1059,6 +1037,7 @@ function openInput({ mode = "predict", preserve = false } = {}) {
   if (isBusy() || state.phase === "booting" || state.switching) return;
   if (state.queryMode !== "verified" && (state.phase === "error" || !state.simId)) { toast("Predictions need the backend — it's currently unreachable."); return; }
   cleanupBranch();
+  constellations.reset();
   map.clearVerdicts();
   closeCharCard();
   hideAudienceCard();
@@ -1112,11 +1091,13 @@ function showResultCard() {
 }
 
 function dismissResults() {
+  state.lastResult = null;
   state.queryMode = "simulation";
   hide(els.resultCard);
   els.resultCard.classList.remove("ab-result");
   abRerender = null;
   hide(els.summary);
+  constellations.reset();
   map.clearVerdicts();
   cleanupBranch();
   setAsk("idle");
@@ -1134,6 +1115,7 @@ function cancelPrediction() {
   hide(els.summary);
   hide(els.resultCard);
   if (marketingOpen()) closeMarketing();
+  constellations.reset();
   map.clearVerdicts();
   cleanupBranch();
   setAsk("idle");
@@ -1456,7 +1438,8 @@ async function runMarketingTest() {
     console.error(err);
     hide(els.summary);
     els.progress.classList.remove("indeterminate");
-    map.clearVerdicts();
+    constellations.reset();
+  map.clearVerdicts();
     cleanupBranch();
     setAsk("idle");
     setIdleStatus();
@@ -1640,6 +1623,8 @@ function showMarketingResults(result) {
 }
 
 function showResults(result) {
+  constellations.setResult(result);
+  void constellations.setActive(true);
   resetEvidence();
   state.phase = "results";
   els.resultCard.classList.remove("ab-result");
@@ -2004,6 +1989,8 @@ els.resultCard.addEventListener("toggle", (e) => {
 }, true);
 
 function showAbResults(result) {
+  constellations.setResult(result);
+  void constellations.setActive(true);
   resetEvidence();
   state.phase = "results";
   setAsk("idle");
@@ -2067,6 +2054,7 @@ function showRephrase(parsed, question) {
   els.progress.classList.remove("indeterminate");
   hide(els.summary);
   clearTimeout(toastTimer); hide(els.toast);
+  constellations.reset();
   map.clearVerdicts();
   cleanupBranch();
 
