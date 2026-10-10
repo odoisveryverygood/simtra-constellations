@@ -1,3 +1,4 @@
+import { createConstellationBridge } from "./constellation-bridge.js";
 // ─────────────────────────────────────────────────────────────────────────
 // sim francisco · pixel-map frontend · orchestration
 //
@@ -107,6 +108,40 @@ export const state = {
   news: [],              // the active city's recent articles (expandable bubble)
   newsExpanded: false,   // whether the news bubble is showing all of them
 };
+
+// City remains the default. Optional teammate modules load only on demand.
+const viewCity = $("view-city"), viewConstellations = $("view-constellations");
+const viewNotice = $("view-notice"), viewCaption = $("view-caption");
+let lastViewMessage = "";
+export const constellations = createConstellationBridge({
+  map, state,
+  loadRenderer: async () => {
+    const module = await import("./constellations.js");
+    if (!$("constellation-styles")) {
+      const link = document.createElement("link");
+      link.id = "constellation-styles"; link.rel = "stylesheet"; link.href = "constellations.css";
+      document.head.append(link);
+    }
+    return module;
+  },
+  loadModel: () => import("./constellation-model.js"),
+  onChange: ({ active, busy, message }) => {
+    document.body.classList.toggle("simtra-constellations-active", active);
+    els.canvas.style.visibility = active ? "hidden" : "";
+    els.canvas.setAttribute("aria-hidden", String(active));
+    els.canvas.tabIndex = active ? -1 : 0;
+    viewCity.setAttribute("aria-pressed", String(!active));
+    viewConstellations.setAttribute("aria-pressed", String(active));
+    viewConstellations.disabled = busy;
+    viewConstellations.textContent = busy ? "Connecting…" : "✦ Constellations";
+    viewCaption.hidden = !active;
+    if (message) { viewNotice.textContent = message; viewNotice.hidden = false; lastViewMessage = message; }
+    else if (active || busy || !lastViewMessage) { viewNotice.hidden = true; }
+  },
+});
+viewCity.addEventListener("click", () => { lastViewMessage = ""; constellations.setActive(false); });
+viewConstellations.addEventListener("click", () => constellations.setActive(true));
+window.addEventListener("pagehide", () => constellations.destroy());
 
 // fallback city when /cities is unavailable — keeps the single-city SF behavior.
 const SF_FALLBACK = { slug: "sf", display: "San Francisco", bbox: { ...MAP.bbox }, default: true };
@@ -486,6 +521,8 @@ function openPastResult(item) {
     past: { test_id: item.id, created_at: item.created_at, events_known: item.events_known, population_key: item.population_key, kind: item.kind, under_event: item.under_event },
   };
   map.clearVerdicts();
+  state.lastResult = result;
+  constellations.setResult(result);
   showResults(result);
 }
 
@@ -553,6 +590,8 @@ async function boot() {
 // load that city's agents and reset the overview. Shared by boot + the switcher.
 async function loadCity(city, { filters = state.filters, preserveOnError = false } = {}) {
   filters = normalizeFilters(filters);
+  constellations.reset();
+  state.lastResult = null;
   resetEvidence();
   state.rawResidents = [];
   state.city = city;
@@ -1132,6 +1171,7 @@ async function runVerifiedQuery(question) {
 }
 
 function showVerifiedResult() {
+  constellations.reset();
   state.phase = "results"; setAsk("idle"); hide(els.summary);
   els.progress.classList.remove("indeterminate");
   els.resultCard.classList.remove("ab-result");
@@ -1253,6 +1293,7 @@ async function runPrediction(question) {
     if (myReq !== state.reqId) return;
 
     state.lastResult = { ...result, framing, question: pollQuestion, audience };
+    constellations.setResult(state.lastResult);
     setTimeout(() => refreshFeedPanel({ quiet: true }), 1500); // the poll is now a post in the feed
 
     // p_yes drives the on-map green/red reveal for both paths; for options it is the
@@ -1473,11 +1514,12 @@ async function runAbTest() {
     const result = await api.abTest(state.mainBranch, {
       ...input,
       as_of_date: PREDICT.as_of_date,
-      model: PREDICT.model,
+      model: PREDICT.ab_model,
       population: "all",
     }, signal);
     if (myReq !== state.reqId) return;
     state.lastResult = { ...result, audience };
+    constellations.setResult(state.lastResult);
     setTimeout(() => refreshFeedPanel({ quiet: true }), 1500); // the A/B test is now a post in the feed
     const verdicts = assignVerdicts(map.agents, result.a_share, input.question, map.proj.planarSize);
     map.setRationales(result.sample_rationales || []);
