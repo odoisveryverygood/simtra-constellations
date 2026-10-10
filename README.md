@@ -1,6 +1,8 @@
-# Simtra — Crafting Constellations
+# Towncast
 
-Independent hackathon starting copy of Simtra. The original local checkout is preserved. **Constellations are planned, not built yet.**
+Towncast helps small and medium businesses explore decisions with a Census-backed synthetic community. A café can ask how residents might respond to a $1 price increase, compare two offers, and inspect simulated responses across demographic groups.
+
+For the hackathon theme **Crafting Constellations**, result reveals connect shared perspectives across the existing moving city. Connections are illustrative, and responses are simulated estimates rather than observed customer behavior.
 
 See [TEAM-TASKS.md](TEAM-TASKS.md) for the three-person split and interface contract.
 
@@ -22,7 +24,9 @@ python3 -m http.server 15175 --bind 127.0.0.1 --directory frontend
 
 Open http://localhost:15175/?backend=local&port=8080&motion=on. If `.env` sets another PORT, use it in the URL. For frontend work you can also use `?demo=1`; it uses synthetic fixture outcomes and does not verify live predictions.
 
-Gemini supports ordinary prediction and parsing. Jev's typed adapter exists for A/B comparisons; the current frontend selects Gemini for A/B too, so enabling a separate Jev path is teammate B's task. Brave is not wired into this starting copy. Resident memory and live news require their separate provider setup.
+Gemini supports ordinary prediction and parsing. Jev provides typed A/B comparisons. Resident memory uses Neo4j and requires private configuration; live news also requires provider setup. Brave search is not yet wired into predictions. See [docs/DEMO.md](docs/DEMO.md) for the demo flow.
+
+Legacy workspace headers and browser storage keys are retained so existing saved workspaces and memory remain accessible.
 
 ## Attribution
 

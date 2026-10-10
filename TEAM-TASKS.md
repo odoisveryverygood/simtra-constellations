@@ -1,6 +1,6 @@
 # Crafting Constellations — three-person build split
 
-Starting point: existing Simtra, copied into this independent repository. The constellation feature is not implemented. Keep the city UI and prediction behavior intact.
+Team ownership for the independent Towncast hackathon repository. The constellation integration is now merged; preserve the city UI and prediction behavior.
 
 ## Teammate A — constellation renderer and resident interactions
 
@@ -18,7 +18,7 @@ Verify TypeSafe/Jev typed A/B comparisons against the local backend with your ow
 
 Own `frontend/src/app.js`, `frontend/src/config.js`, `frontend/index.html`, and demo/pitch materials. Add City / Constellations toggle; initialize A's renderer and feed B's model after successful predictions or A/B comparisons. Restore the original city immediately when toggled back. Keep city switching, resident movement, demographic charts, and the prediction composer working. Separate Gemini prediction configuration from Jev A/B configuration.
 
-Demo: ask a question → inspect shared opinion patterns → compare messages → explore a resident → return to the same city. State that residents and results are simulated. Pitch: Simtra connects simulated community perspectives into constellations of shared beliefs.
+Demo: ask a question → inspect shared opinion patterns → compare messages → explore a resident → return to the same city. State that residents and results are simulated. Pitch: Towncast connects simulated community perspectives into constellations of shared beliefs.
 
 ## Collaboration
 

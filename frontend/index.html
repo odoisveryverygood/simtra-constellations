@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simtra - Simulate anything</title>
+  <title>Towncast - Explore business decisions</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23141414' d='M12 2l1.8 5L19 9l-5.2 2L12 16l-1.8-5L5 9l5.2-2z'/%3E%3C/svg%3E" />
 
   <!-- fonts: Pixelify Sans (title) · Neue Haas Grotesk Display (body, via Typekit); skipped in ?demo=1 -->
@@ -23,11 +23,11 @@
     .view-switch button[aria-pressed="true"] {background:#182238;color:white;}
     .view-switch button:focus-visible {outline:3px solid #4988ef;outline-offset:2px;}
     .view-notice {position:absolute;top:135px;right:20px;max-width:245px;margin:0;padding:8px 12px;border-radius:12px;background:#ffffffed;color:#344054;font:11px/1.5 system-ui;z-index:25;}
-    .simtra-constellations-active .result-card:not([hidden]) {max-height:38dvh!important;width:min(480px,88vw);display:flex;flex-direction:column;}
-    .simtra-constellations-active .result-card > * {flex-shrink:0;}
-    .simtra-constellations-active .res-close {align-self:flex-end;}
-    .simtra-constellations-active .res-audience {order:1;margin-top:16px;}
-    .simtra-constellations-active .feed-panel {display:none!important;}
+    .towncast-constellations-active .result-card:not([hidden]) {max-height:38dvh!important;width:min(480px,88vw);display:flex;flex-direction:column;}
+    .towncast-constellations-active .result-card > * {flex-shrink:0;}
+    .towncast-constellations-active .res-close {align-self:flex-end;}
+    .towncast-constellations-active .res-audience {order:1;margin-top:16px;}
+    .towncast-constellations-active .feed-panel {display:none!important;}
     .offline-demo .view-switch,.offline-demo .view-notice {margin-top:46px;}
     @media(max-width:699px){.view-switch{top:112px;right:12px;}.view-notice{top:152px;right:12px;max-width:210px;}.offline-demo .view-switch,.offline-demo .view-notice{margin-top:66px;}}
   </style>
@@ -228,9 +228,9 @@
 
     <!-- about card (opened by the ? button) -->
     <div id="about-scrim" class="about-scrim hidden"></div>
-    <div id="about" class="about hidden" role="dialog" aria-modal="true" aria-label="Simtra user manual">
+    <div id="about" class="about hidden" role="dialog" aria-modal="true" aria-label="Towncast user manual">
       <button id="about-close" class="about-close" aria-label="Close">×</button>
-      <div class="about-title">Simtra</div>
+      <div class="about-title">Towncast</div>
       <div class="about-sub">Know the impact of a million-dollar decision in twenty minutes instead of four months.</div>
       <p class="about-intro">A live simulation of San Francisco: 10,000 digital residents built from real US Census data, each with a background, motivation, memory and daily life.</p>
 
@@ -296,6 +296,6 @@
   </div>
 
   <script src="backend-config.js?v=1"></script>
-  <script type="module" src="src/app.js?v=city-connections-2"></script>
+  <script type="module" src="src/app.js?v=towncast-1"></script>
 </body>
 </html>

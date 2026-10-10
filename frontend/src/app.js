@@ -116,7 +116,7 @@ export const constellations = createConstellationBridge({
   loadRenderer: () => import("./city-constellations.js?v=2"),
   loadModel: () => import("./constellation-model.js"),
   onChange: ({ active, busy, message }) => {
-    document.body.classList.toggle("simtra-constellations-active", active);
+    document.body.classList.toggle("towncast-constellations-active", active);
     viewConstellations.hidden = !state.lastResult || !active && state.phase !== "results";
     viewConstellations.setAttribute("aria-pressed", String(active));
     viewConstellations.disabled = busy;

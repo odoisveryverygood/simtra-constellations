@@ -17,10 +17,12 @@ const LOCAL_PORT = (() => {
   return Number.isInteger(raw) && raw > 0 && raw < 65536 ? raw : 8080;
 })();
 // A deployed frontend can point at its own backend: `frontend/backend-config.js`
-// sets `window.SIMTRA_BACKEND` (edit it per deployment), or `?backend=https://…`
+// sets `window.TOWNCAST_BACKEND` (edit it per deployment), or `?backend=https://…`
 // picks one for a single visit. Only https origins are accepted for the override.
 const CONFIGURED_BACKEND = (() => {
-  const fromFile = typeof globalThis.SIMTRA_BACKEND === "string" ? globalThis.SIMTRA_BACKEND.trim() : "";
+  // Accept the previous deployment setting for existing installations.
+  const configured = globalThis.TOWNCAST_BACKEND ?? globalThis.SIMTRA_BACKEND;
+  const fromFile = typeof configured === "string" ? configured.trim() : "";
   const fromQuery = (QUERY.get("backend") || "").trim();
   const pick = /^https:\/\/[^\s/]+/.test(fromQuery) ? fromQuery : fromFile;
   return /^https:\/\/[^\s/]+/.test(pick) ? pick.replace(/\/+$/, "") : "";

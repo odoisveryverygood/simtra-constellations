@@ -1,6 +1,6 @@
 # City result integration
 
-Simtra stays a single city experience. Prediction and A/B results automatically reveal a bounded layer of illustrative resident connections on the existing map. The city keeps all residents, motion, pan/zoom, inspection, and its original weighted result card. A small Show/Hide connections control appears only with a result. Dismissal, a new question, city changes, and verified-data queries clear connections.
+Towncast stays a single city experience. Prediction and A/B results automatically reveal a bounded layer of illustrative resident connections on the existing map. The city keeps all residents, motion, pan/zoom, inspection, and its original weighted result card. A small Show/Hide connections control appears only with a result. Dismissal, a new question, city changes, and verified-data queries clear connections.
 
 Teammate B's model supplies weighted aggregate shares and illustrative memberships. Teammate A's normalization and rendering budgets are reused by `city-constellations.js`; A's standalone sky renderer remains available in its development harness. No real friendship or independent resident-vote claim is made. The notice reports the actual loaded sample size and explicitly labels offline fixtures.
 
