@@ -1,4 +1,4 @@
-import { createConstellationBridge } from "./constellation-bridge.js";
+import { createConstellationBridge } from "./constellation-bridge.js?v=2";
 // ─────────────────────────────────────────────────────────────────────────
 // sim francisco · pixel-map frontend · orchestration
 //
@@ -17,7 +17,7 @@ import {
   AB_CROSS_KEY_SEP, AB_MIN_SEGMENT_N, abCrossMatrix, abLeanAlpha, abSegments,
   abTopMovers, isCrossBreakdown, normalizeBreakdowns, pct, signedPp,
 } from "./ab-analysis.js";
-import * as api from "./api.js?v=ws-1";
+import * as api from "./api.js?v=ws-2-constellations";
 import { buildEvidenceChartModel } from "./evidence-chart.js";
 import { createPersonaChart, answerLabel } from "./persona-chart.js?v=5";
 import { buildVerifiedDataModel, renderVerifiedData, bindVerifiedData, reduceVerifiedSelection, verifiedMapSelection } from "./verified-data.js";
