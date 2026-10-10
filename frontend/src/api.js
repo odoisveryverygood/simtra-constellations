@@ -130,88 +130,15 @@ export const poll = (branchId, payload, signal) =>
     signal,
   });
 
-function previewFingerprint(payload) {
-  const text = `${payload.question}\n${payload.variant_a}\n${payload.variant_b}`;
-  let hash = 2166136261;
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-function swapPreviewBreakdowns(breakdowns) {
-  return (breakdowns || []).map((breakdown) => ({
-    ...breakdown,
-    groups: (breakdown.groups || []).map((group) => ({
-      ...group,
-      a_share: group.b_share,
-      b_share: group.a_share,
-    })),
-  }));
-}
-
-function transitPreviewRationales(payload) {
-  const transitQuestion = /public transit/i.test(payload.question);
-  const commuteMessage = /shorter commutes|fewer cars/i.test(payload.variant_a);
-  const affordabilityMessage = /fares affordable|workers, students, and families/i.test(payload.variant_b);
-  if (!transitQuestion || !commuteMessage || !affordabilityMessage) return null;
-  return [
-    "Variant B feels more inclusive because it speaks directly to workers, students, and families.",
-    "Keeping fares affordable matters more to me than the broader promise of a connected city.",
-    "Variant A's shorter commutes and fewer cars are compelling, but Variant B makes the benefit feel more immediate.",
-    "Expanded service and affordable fares sound like practical improvements I would use every week.",
-    "I prefer the message that combines wider service with a clear commitment to affordability.",
-  ];
-}
-
-async function previewAbResult(payload, signal) {
-  const fixtureUrl = new URL("../fixtures/ab-sample.json", import.meta.url);
-  const response = await fetch(fixtureUrl, { signal });
-  if (!response.ok) throw new Error(`A/B preview fixture unavailable → ${response.status}`);
-  const fixture = await response.json();
-  const tailoredRationales = transitPreviewRationales(payload);
-  const swap = tailoredRationales ? true : previewFingerprint(payload) % 2 === 1;
-  const aShare = swap ? fixture.b_share : fixture.a_share;
-  const bShare = swap ? fixture.a_share : fixture.b_share;
-  const margin = aShare - bShare;
-
-  return {
-    ...fixture,
-    question: payload.question,
-    variant_a: payload.variant_a,
-    variant_b: payload.variant_b,
-    as_of_date: payload.as_of_date,
-    model: payload.model,
-    a_share: aShare,
-    b_share: bShare,
-    margin_pp: margin * 100,
-    winner: Math.abs(margin) < 0.005 ? "tie" : margin > 0 ? "a" : "b",
-    a_ci: swap ? fixture.b_ci : fixture.a_ci,
-    b_ci: swap ? fixture.a_ci : fixture.b_ci,
-    breakdowns: swap ? swapPreviewBreakdowns(fixture.breakdowns) : fixture.breakdowns,
-    sample_rationales: tailoredRationales || fixture.sample_rationales,
-    preview_mode: true,
-  };
-}
-
-export async function abTest(branchId, payload, signal) {
-  try {
-    return await req(`/branches/${encodeURIComponent(branchId)}/ab-test`, {
-      method: "POST",
-      body: payload,
-      timeout: 180000,
-      signal,
-    });
-  } catch (error) {
-    if (error.status !== 404) throw error;
-  }
-
-  // Temporary demo path for deployments that do not have /ab-test yet.
-  // Keep this internal marker so the saved result can be found and removed later.
-  console.warn("A/B endpoint missing; using saved preview data.");
-  return previewAbResult(payload, signal);
-}
+// Jev is selected only for the typed A/B endpoint. Ordinary poll/parse callers
+// retain their prediction model. Missing routes/keys and budget errors propagate.
+export const abTest = (branchId, payload, signal) =>
+  req(`/branches/${encodeURIComponent(branchId)}/ab-test`, {
+    method: "POST",
+    body: { ...payload, model: payload.model ?? "jev-latest" },
+    timeout: 180000,
+    signal,
+  });
 
 // Compare a baseline binary poll with simulated exposure to planned marketing copy.
 // Returns { baseline, exposed, delta } where delta is exposed.p_yes - baseline.p_yes.
@@ -267,9 +194,9 @@ async function demoRequest(path, { method, body, signal }) {
   else if (route.endsWith("/agents")) {
     const offset = Number(url.searchParams.get("offset") || 0), limit = Number(url.searchParams.get("limit") || 1000);
     result = { agents: row.agents.slice(offset, offset + limit), total_matched: row.agents.length };
-  } else if (route.endsWith("/poll")) result = body.framing === "options" ? row.options : row.binary;
+  } else if (route.endsWith("/poll")) result = { ...(body.framing === "options" ? row.options : row.binary), fixture_mode: true, model: "offline-fixture" };
   else if (route.endsWith("/counterfactual")) result = { baseline: row.binary, exposed: row.binary, delta: 0, fixture_mode: true };
-  else if (route.endsWith("/ab-test")) result = { ...row.binary, ...body, a_share: row.binary.p_yes, b_share: 1-row.binary.p_yes,
+  else if (route.endsWith("/ab-test")) result = { ...row.binary, ...body, fixture_mode: true, model: "offline-fixture", a_share: row.binary.p_yes, b_share: 1-row.binary.p_yes,
     a_ci: [row.binary.ci_low,row.binary.ci_high], b_ci: [1-row.binary.ci_high,1-row.binary.ci_low], winner: "a", margin_pp: (2*row.binary.p_yes-1)*100,
     breakdowns: row.binary.option_breakdowns.map((b) => ({ ...b, groups: b.groups.map((g) => ({ ...g, a_share:g.shares[0], b_share:g.shares[1] })) })) };
   else if (method === "DELETE") result = { deleted: true };
