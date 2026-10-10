@@ -56,6 +56,8 @@ export function today() {
 const AS_OF_OVERRIDE = /^\d{4}-\d{2}-\d{2}$/.test(QUERY.get("as_of") || "") ? QUERY.get("as_of") : null;
 export const PREDICT = {
   branch_ticks: 2,
+  // Keep the typed Jev path separate from Gemini text generation.
+  ab_model: QUERY.get("ab_model") || "jev-latest",
   as_of_date: AS_OF_OVERRIDE || (OWN_BACKEND ? today() : "2026-06-13"),
   model: QUERY.get("model") || (OWN_BACKEND ? "gemini-3.5-flash-lite" : "claude-sonnet-4-6"),
 };

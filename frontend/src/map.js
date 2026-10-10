@@ -730,6 +730,7 @@ export class SFMap {
     }
 
     this._drawSprites(now, dt);
+    this.drawConstellations?.(ctx, now);
     if (!this.reducedMotion) this._updateBubbles(now);
     this._drawBubbles();
 
@@ -751,7 +752,7 @@ export class SFMap {
     const ctx = this.ctx;
     const z = this.cam.zoom;
     const drawPx = Math.max(3, SPRITE_WORLD * z);          // on-screen sprite height
-    const showVerdict = this.mode === "reveal" || this.mode === "results" || this.mode === "clearing";
+    const showVerdict = !this.constellationActive && (this.mode === "reveal" || this.mode === "results" || this.mode === "clearing");
     const breathing = this.mode === "waiting" && !this.reducedMotion;
     const margin = drawPx * 2;
     const spriteOk = this.spriteReady;

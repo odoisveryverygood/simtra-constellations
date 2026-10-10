@@ -17,6 +17,20 @@
     }
   </script>
   <link rel="preconnect" href="https://sf-digital-twin-tp.fly.dev" />
+  <style>
+    .view-switch {position:absolute;top:94px;right:20px;z-index:25;}
+    .view-switch button {border:1px solid #d6dde7;border-radius:20px;padding:9px 14px;background:#ffffffed;color:#344054;font:600 12px system-ui;cursor:pointer;}
+    .view-switch button[aria-pressed="true"] {background:#182238;color:white;}
+    .view-switch button:focus-visible {outline:3px solid #4988ef;outline-offset:2px;}
+    .view-notice {position:absolute;top:135px;right:20px;max-width:245px;margin:0;padding:8px 12px;border-radius:12px;background:#ffffffed;color:#344054;font:11px/1.5 system-ui;z-index:25;}
+    .simtra-constellations-active .result-card:not([hidden]) {max-height:38dvh!important;width:min(480px,88vw);display:flex;flex-direction:column;}
+    .simtra-constellations-active .result-card > * {flex-shrink:0;}
+    .simtra-constellations-active .res-close {align-self:flex-end;}
+    .simtra-constellations-active .res-audience {order:1;margin-top:16px;}
+    .simtra-constellations-active .feed-panel {display:none!important;}
+    .offline-demo .view-switch,.offline-demo .view-notice {margin-top:46px;}
+    @media(max-width:699px){.view-switch{top:112px;right:12px;}.view-notice{top:152px;right:12px;max-width:210px;}.offline-demo .view-switch,.offline-demo .view-notice{margin-top:66px;}}
+  </style>
 </head>
 <body>
   <!-- the pixel-art city fills the entire page -->
@@ -24,6 +38,10 @@
   <p id="demo-banner" hidden>Offline demo · Census/PUMS demographics · synthetic residents · fixed fixture outcomes, not answers to new questions. <a href="?">Exit demo</a></p>
 
   <div id="ui">
+    <div class="view-switch" role="group" aria-label="Result connections">
+      <button id="view-constellations" type="button" aria-pressed="false" hidden>✦ Show connections</button>
+    </div>
+    <p id="view-notice" class="view-notice" role="status" aria-live="polite" hidden></p>
     <div class="map-atmosphere" aria-hidden="true">
       <div class="map-grid"></div>
       <div class="map-coordinates map-coordinates--west">37° 46′ N</div>
@@ -278,6 +296,6 @@
   </div>
 
   <script src="backend-config.js?v=1"></script>
-  <script type="module" src="src/app.js?v=fix6-9-motion"></script>
+  <script type="module" src="src/app.js?v=city-connections-1"></script>
 </body>
 </html>
