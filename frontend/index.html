@@ -34,9 +34,9 @@
     .simtra-constellations-active #return {display:none!important;}
     .simtra-constellations-active .result-card {visibility:hidden;pointer-events:none!important;}
     .simtra-constellations-active .cst-header {top:158px;}
-    .simtra-constellations-active .cst-legend {bottom:260px;}
-    .simtra-constellations-active .cst-note {bottom:200px;}
-    .simtra-constellations-active .cst-card {bottom:220px;z-index:5;}
+    .simtra-constellations-active .cst-legend {bottom:calc(var(--constellation-dock-clearance, 200px) + 75px);}
+    .simtra-constellations-active .cst-note {bottom:var(--constellation-dock-clearance, 200px);}
+    .simtra-constellations-active .cst-card {bottom:calc(var(--constellation-dock-clearance, 200px) + 95px);z-index:5;}
 
     .offline-demo .view-switch, .offline-demo .view-notice {margin-top:46px;}
     .offline-demo .feed-panel {top:190px!important;}
@@ -312,6 +312,6 @@
   </div>
 
   <script src="backend-config.js?v=1"></script>
-  <script type="module" src="src/app.js?v=constellation-integration-5"></script>
+  <script type="module" src="src/app.js?v=constellation-integration-6"></script>
 </body>
 </html>

@@ -113,6 +113,14 @@ export const state = {
 const viewCity = $("view-city"), viewConstellations = $("view-constellations");
 const viewNotice = $("view-notice"), viewCaption = $("view-caption");
 let lastViewMessage = "";
+function syncConstellationInsets() {
+  const top = els.ask.getBoundingClientRect().top;
+  document.documentElement.style.setProperty("--constellation-dock-clearance", `${Math.max(160, innerHeight - top + 12)}px`);
+}
+const constellationDockObserver = new ResizeObserver(syncConstellationInsets);
+constellationDockObserver.observe(els.ask);
+window.addEventListener("resize", syncConstellationInsets);
+
 export const constellations = createConstellationBridge({
   map, state,
   loadRenderer: async () => {
@@ -135,6 +143,7 @@ export const constellations = createConstellationBridge({
     viewConstellations.disabled = busy;
     viewConstellations.textContent = busy ? "Connecting…" : "✦ Constellations";
     viewCaption.hidden = !active;
+    if (active) syncConstellationInsets();
     if (message) { viewNotice.textContent = message; viewNotice.hidden = false; lastViewMessage = message; }
     else if (active || busy || !lastViewMessage) { viewNotice.hidden = true; }
   },
