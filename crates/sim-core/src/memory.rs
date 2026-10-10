@@ -1662,6 +1662,7 @@ pub fn breakdowns_json(result: &PollResult) -> String {
         "breakdowns": result.breakdowns,
         "option_breakdowns": result.option_breakdowns,
         "p_distribution": result.p_distribution,
+        "brave": result.brave,
     });
     let s = serde_json::to_string(&v).unwrap_or_default();
     if s.len() > MAX_BREAKDOWNS_BYTES { String::new() } else { s }
@@ -1763,6 +1764,7 @@ mod tests {
         let mut breakdowns = HashMap::new();
         breakdowns.insert("age".to_string(), vec![DemoBreak { key: "25-34".into(), yes_share: 0.7, weight: 100.0, n: 12 }]);
         let result = PollResult {
+            brave: crate::brave::BraveEvidence::default(),
             question: "Q?".into(), as_of_date: "2026-09-12".into(), model: "m".into(), p_yes: 0.6,
             ci_low: 0.5, ci_high: 0.7, n_agents: 10, n_eff: 9.0, design_effect: 1.0, breakdowns,
             n_archetypes: 2, n_llm_calls: 1, sample_rationales: vec![], p_distribution: vec![],

@@ -2498,7 +2498,7 @@ pub fn build_state(
     } else {
         tracing::info!("RocketRide question routing not configured; using local router");
     }
-    let engine = Engine::new_with_hydra(client.clone(), hydra.clone()).with_memory(memory.clone());
+    let engine = Engine::new_with_hydra(client.clone(), hydra.clone()).with_memory(memory.clone()).with_brave(crate::brave::BraveClient::from_env());
     let store = Arc::new(Store::open(state_db)?);
 
     // SF is always available (committed tiles.db + PUMS at the repo root).

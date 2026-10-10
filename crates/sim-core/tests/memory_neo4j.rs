@@ -118,6 +118,7 @@ async fn neo4j_memory_roundtrip() {
         options: vec![],
     };
     let result = PollResult {
+        brave: simfrancisco::brave::BraveEvidence::default(),
         question: poll.question.clone(),
         as_of_date: poll.as_of_date.clone(),
         model: "test".into(),

@@ -123,6 +123,7 @@ mod tests {
     #[test]
     fn response_preserves_all_legacy_values_when_hydra_is_unavailable() {
         let result = PollResult {
+            brave: crate::brave::BraveEvidence::default(),
             question: "Fixture".into(),
             as_of_date: "2024-06-01".into(),
             model: "fixture".into(),

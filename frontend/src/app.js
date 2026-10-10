@@ -362,7 +362,7 @@ function attachEvidence(result, ab = false) {
   // under the result itself: after the bars, meta and scope; ABOVE the advanced
   // breakdown and the quotes
   const adv = els.resultCard.querySelector(".ab-adv");
-  const anchor = els.resultCard.querySelector(".res-hydra") || els.resultCard.querySelector(".res-meta") || els.resultCard.querySelector(".res-scope");
+  const anchor = els.resultCard.querySelector(":scope > .res-web-sources") || els.resultCard.querySelector(":scope > .res-hydra") || els.resultCard.querySelector(":scope > .res-meta") || els.resultCard.querySelector(":scope > .res-scope");
   if (adv) adv.before(section);
   else if (anchor) anchor.after(section);
   else { const why = els.resultCard.querySelector(".res-why") || els.resultCard.querySelector(".res-actions"); why ? why.before(section) : els.resultCard.append(section); }
@@ -503,7 +503,7 @@ function openPastResult(item) {
     p_yes: item.p_yes, ci_low: null, ci_high: null,
     p_distribution: framing === "options" ? options.map((o, i) => [o, item.p_distribution[i] ?? 0]) : (stored.p_distribution || []),
     breakdowns: stored.breakdowns || {}, option_breakdowns: stored.option_breakdowns || [],
-    sample_rationales: [], hydra: null, audience: currentAudience(),
+    sample_rationales: [], hydra: null, brave: stored.brave, audience: currentAudience(),
     past: { test_id: item.id, created_at: item.created_at, events_known: item.events_known, population_key: item.population_key, kind: item.kind, under_event: item.under_event },
   };
   constellations.reset();
@@ -1561,6 +1561,19 @@ function pastMeta(result) {
   return `<div class="res-meta">From the timeline · ${escapeHtml(stamp)}${known}${result.model ? ` · ${escapeHtml(result.model)}` : ""}</div>${hypo}`;
 }
 
+function braveMeta(result) {
+  const evidence = result?.brave;
+  if (!evidence || evidence.status === "ab_not_applicable") return "";
+  if (evidence.status !== "connected") {
+    const message = evidence.status === "historical_skipped" ? "Current web search skipped for this historical date." : "Brave web context unavailable — this result uses no Brave sources.";
+    return `<div class="res-meta">${escapeHtml(message)}</div>`;
+  }
+  const links = (evidence.sources || []).filter(source => {
+    try { return ["https:", "http:"].includes(new URL(source.url).protocol); } catch { return false; }
+  }).map(source => `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title || source.url)}</a></li>`).join("");
+  return `<details class="res-web-sources"><summary>Brave web context · ${(evidence.sources || []).length} sources</summary><div class="res-meta">Search excerpts used as context; not verified customer responses.</div><ul>${links}</ul></details>`;
+}
+
 function hydraMeta(result) {
   const hydra = result?.hydra;
   if (!hydra || hydra.status !== "connected" || !Number(hydra.chunks)) return "";
@@ -1609,6 +1622,7 @@ function showMarketingResults(result) {
     </div>
     <div class="res-scope">${audienceScope(result.audience)} · same audience in both arms</div>
     ${hydraMeta(exposed)}
+    ${braveMeta(exposed)}
     <div class="res-cf-note">Model-based comparison under simulated exposure of every sampled resident to the planned copy—not an estimate of organic reach. Each arm has its own 95% CI; no separate CI was estimated for the delta, so treat small shifts cautiously.</div>
     ${rationales.length ? `<div class="res-why"><div class="res-why-label">simulated responses after exposure</div><ul>${rationales.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul></div>` : ""}
     <div class="res-actions"><button id="res-edit-marketing" class="btn btn-primary">Edit test</button><button id="res-dismiss" class="btn">Dismiss</button></div>`;
@@ -1676,6 +1690,7 @@ function showResults(result) {
       <div class="res-scope">${audienceScope(result.audience)}</div>
       ${result.past ? pastMeta(result) : `<div class="res-meta">Model estimate · 95% interval ${ciLow}–${ciHigh}%</div>`}
       ${hydraMeta(result)}
+    ${braveMeta(result)}
       ${breakdowns.length ? abAdvancedSection({ a_share: yesShare }, segments, breakdowns) : ""}
       ${rationales.length ? `<div class="res-why">
         <div class="res-why-label">simulated responses from this audience</div>
@@ -1741,6 +1756,7 @@ function showOptionResults(result) {
     <div class="res-scope">${audienceScope(result.audience)}</div>
     ${result.past ? pastMeta(result) : ""}
     ${hydraMeta(result)}
+    ${braveMeta(result)}
     ${rationales.length ? `<div class="res-why">
       <div class="res-why-label">simulated responses from this audience</div>
       <ul>${rationales.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul>
@@ -2025,6 +2041,7 @@ function showAbResults(result) {
       <div class="res-scope">${audienceScope(result.audience)}</div>
       <div class="res-meta">A · 95% model interval ${pct(aCi[0])}–${pct(aCi[1])}%</div>
       ${hydraMeta(result)}
+    ${braveMeta(result)}
       ${breakdowns.length ? abAdvancedSection(result, segments, breakdowns) : ""}
       ${rationales.length ? `<div class="res-why"><div class="res-why-label">simulated responses from this audience</div><ul>${rationales.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul></div>` : ""}
       <p class="ab-note">Simulated, PUMS-weighted preference under full exposure. Segment and cross-tab figures are model estimates with no per-group significance test — read them as direction, not proof. Not causal proof or organic reach.</p>

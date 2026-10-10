@@ -1289,3 +1289,9 @@ body.offline-demo .result-card { max-height: min(60dvh, 720px); }
 .manual-title { margin: 0 0 var(--s-3); font-size: var(--fs-title3); font-weight: var(--fw-bold); letter-spacing: var(--tr-tight); line-height: var(--lh-tight); color: var(--ink); }
 .manual-step .about-list { margin-bottom: 0; }
 .manual-step + .about-h { margin-top: var(--s-5); }
+
+/* Keep retrieved evidence compact until the user wants to inspect it. */
+.res-web-sources { margin: 12px 0; font-size: 12px; line-height: 1.5; }
+.res-web-sources summary { cursor: pointer; color: #3175f5; font-weight: 600; }
+.res-web-sources ul { margin: 8px 0; padding-left: 18px; }
+.res-web-sources a { color: #245bc3; overflow-wrap: anywhere; }

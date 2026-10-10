@@ -16,6 +16,7 @@ pub mod data_source;
 pub mod evidence;
 pub mod geo;
 pub mod hydra;
+pub mod brave;
 pub mod insforge;
 pub mod lifestyle;
 pub mod memory;

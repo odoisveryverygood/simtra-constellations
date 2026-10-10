@@ -24,7 +24,7 @@ python3 -m http.server 15175 --bind 127.0.0.1 --directory frontend
 
 Open http://localhost:15175/?backend=local&port=8080&motion=on. If `.env` sets another PORT, use it in the URL. For frontend work you can also use `?demo=1`; it uses synthetic fixture outcomes and does not verify live predictions.
 
-Gemini supports ordinary prediction and parsing. Jev provides typed A/B comparisons. Resident memory uses Neo4j and requires private configuration; live news also requires provider setup. Brave search is not yet wired into predictions. See [docs/DEMO.md](docs/DEMO.md) for the demo flow.
+Gemini supports ordinary prediction and parsing. Jev provides typed A/B comparisons. Resident memory uses Neo4j and requires private configuration; live news also requires provider setup. Brave Search retrieves up to five web sources for current-date ordinary predictions when `BRAVE_SEARCH_API_KEY` (or `BRAVE_API_KEY`) is set privately. Excerpts enter the model as untrusted context, and the result shows clickable sources. Search failure is visible and does not prevent simulation. Current web search is skipped for historical dates and the isolated Jev A/B path. See [docs/DEMO.md](docs/DEMO.md) for the demo flow.
 
 Legacy workspace headers and browser storage keys are retained so existing saved workspaces and memory remain accessible.
 
