@@ -113,7 +113,7 @@ export const state = {
 const viewConstellations = $("view-constellations"), viewNotice = $("view-notice");
 export const constellations = createConstellationBridge({
   map, state,
-  loadRenderer: () => import("./city-constellations.js?v=1"),
+  loadRenderer: () => import("./city-constellations.js?v=2"),
   loadModel: () => import("./constellation-model.js"),
   onChange: ({ active, busy, message }) => {
     document.body.classList.toggle("simtra-constellations-active", active);

@@ -47,15 +47,18 @@ export function initConstellations(map) {
     ctx.save();
     ctx.fillStyle = '#101b32'; ctx.globalAlpha = .18;
     ctx.fillRect(0,0,map.cssW,map.cssH);
-    ctx.globalAlpha = .5; ctx.lineWidth = 1;
+    ctx.globalAlpha = .7; ctx.lineWidth = 1.35;
     for (const {a,b,slot} of cached.edges) {
       ctx.strokeStyle = colors[slot % colors.length];
-      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(a.x,a.y-3);ctx.lineTo(b.x,b.y-3);ctx.stroke();
     }
     ctx.globalAlpha = .9;
     for (const star of cached.stars) {
       ctx.fillStyle = colors[star.slot % colors.length];
-      ctx.beginPath(); ctx.arc(star.x,star.y-3,2,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha = .18;
+      ctx.beginPath(); ctx.arc(star.x,star.y-3,4.5,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha = .95;
+      ctx.beginPath(); ctx.arc(star.x,star.y-3,2.6,0,Math.PI*2);ctx.fill();
     }
     ctx.restore();
   }
